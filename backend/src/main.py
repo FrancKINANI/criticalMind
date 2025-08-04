@@ -24,19 +24,21 @@ from src.routes.forum import forum_bp
 from src.routes.gamification import gamification_bp
 from src.routes.admin import admin_bp
 from src.routes.notifications import notifications_bp
+
 try:
-    from src.utils.config import Config
+    from src.utils.config import config
     from src.utils.error_handlers import register_error_handlers
-    from src.utils.security import setup_security_headers
-except ImportError:
+    from src.utils.security import setup_security_headers, SecurityMiddleware
+    from src.utils.monitoring import init_monitoring
+    from src.utils.input_validation import ValidationError
+    from flask_talisman import Talisman
+    from flask_wtf.csrf import CSRFProtect
+    from flask_caching import Cache
+    from flask_migrate import Migrate
+except ImportError as e:
+    print(f"Warning: Could not import enhanced modules: {e}")
     # Fallback for missing modules
-    class Config:
-        SECRET_KEY = 'dev-secret-key'
-        SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
-        SQLALCHEMY_TRACK_MODIFICATIONS = False
-        CORS_ORIGINS = ['http://localhost:3000']
-        VERSION = '1.0.0'
-        FLASK_ENV = 'development'
+    from src.utils.config import Config as config
 
     def register_error_handlers(app):
         pass
@@ -44,23 +46,77 @@ except ImportError:
     def setup_security_headers(app):
         pass
 
-def create_app(config_class=Config):
-    """Application factory pattern"""
+    def init_monitoring(app):
+        return app
+
+    class SecurityMiddleware:
+        def __init__(self, app):
+            pass
+
+    class Talisman:
+        def __init__(self, app, **kwargs):
+            pass
+
+    class CSRFProtect:
+        def __init__(self, app=None):
+            pass
+
+    class Cache:
+        def __init__(self, app=None, config=None):
+            pass
+
+    class Migrate:
+        def __init__(self, app=None, db=None):
+            pass
+
+def create_app(config_name=None):
+    """Application factory pattern with enhanced security and monitoring"""
     app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 
-    # Load configuration
-    app.config.from_object(config_class)
+    # Load configuration based on environment
+    config_name = config_name or os.environ.get('FLASK_ENV', 'development')
+    app.config.from_object(config[config_name])
 
     # Trust proxy headers for rate limiting
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+    # Initialize security middleware
+    SecurityMiddleware(app)
+
+    # Setup CSRF protection
+    csrf = CSRFProtect(app)
+
+    # Setup security headers with Talisman
+    if app.config.get('FLASK_ENV') == 'production':
+        Talisman(
+            app,
+            force_https=True,
+            strict_transport_security=True,
+            strict_transport_security_max_age=31536000,
+            content_security_policy={
+                'default-src': "'self'",
+                'script-src': "'self' 'unsafe-inline' https://js.stripe.com",
+                'style-src': "'self' 'unsafe-inline'",
+                'img-src': "'self' data: https:",
+                'font-src': "'self' https:",
+                'connect-src': "'self' https://api.stripe.com"
+            }
+        )
 
     # Setup rate limiting
     limiter = Limiter(
         app,
         key_func=get_remote_address,
-        default_limits=["1000 per hour", "100 per minute"],
+        default_limits=[app.config.get('RATELIMIT_DEFAULT', "1000 per hour, 100 per minute")],
         storage_uri=app.config.get('REDIS_URL', 'memory://')
     )
+
+    # Initialize caching
+    cache = Cache(app, config={
+        'CACHE_TYPE': 'redis',
+        'CACHE_REDIS_URL': app.config.get('REDIS_URL'),
+        'CACHE_DEFAULT_TIMEOUT': 300
+    })
 
     # Configure CORS properly
     CORS(app,
