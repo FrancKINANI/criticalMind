@@ -1,14 +1,17 @@
 from flask import Blueprint, request, jsonify, g
 from src.models import db
+from src.models.user import User
 from src.models.learning import LearningModule, Exercise, UserProgress, UserResponse
 from src.models.gamification import UserPoints, Badge, UserBadge
 from src.models.notification import Notification
 from src.utils.auth import token_required, role_required, organization_required
 from src.utils.validators import validate_json, validate_pagination_params, sanitize_input
 from src.utils.subscription_manager import require_subscription_limit, SubscriptionManager
+from src.services.llm_provider import get_llm_provider
 from datetime import datetime
-import openai
-import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 learning_bp = Blueprint('learning', __name__)
 
@@ -242,13 +245,14 @@ def submit_exercise_response(exercise_id):
     # Évaluer la réponse
     is_correct = False
     points_earned = 0
+    provider_warning = False  # True quand le provider actif est un modèle local/edge
     
     if exercise.exercise_type == 'multiple_choice':
         is_correct = data['response'] == exercise.correct_answer
         points_earned = exercise.points if is_correct else 0
     elif exercise.exercise_type == 'essay':
         # Pour les essais, utiliser l'IA pour l'évaluation
-        ai_feedback, points_earned = evaluate_essay_with_ai(
+        ai_feedback, points_earned, provider_warning = evaluate_essay_with_ai(
             exercise.question, 
             data['response'], 
             exercise.correct_answer,
@@ -311,7 +315,8 @@ def submit_exercise_response(exercise_id):
         'is_correct': is_correct,
         'points_earned': points_earned,
         'explanation': exercise.explanation,
-        'ai_feedback': response.ai_feedback
+        'ai_feedback': response.ai_feedback,
+        'evaluation_warning': provider_warning if exercise.exercise_type == 'essay' else False
     }), 201
 
 @learning_bp.route('/progress', methods=['GET'])
@@ -385,10 +390,23 @@ def get_ai_hint(exercise_id=None):
     }), 200
 
 def evaluate_essay_with_ai(question, user_response, expected_answer, max_points):
-    """Évaluer un essai avec l'IA"""
+    """Évaluer un essai avec l'IA (cloud ou edge).
+
+    Retourne un triplet (ai_feedback, points_earned, provider_warning) :
+    ``provider_warning`` vaut True quand le provider actif est un modèle
+    local/edge (Ollama) — qualité non garantie équivalente au mode cloud tant
+    qu'aucun benchmark n'a validé la parité (fonctionnalité payante Stripe).
+    """
+    provider = get_llm_provider()
+    provider_warning = provider.is_edge
+    if provider_warning:
+        logger.warning(
+            '[EDGE LLM] evaluate_essay_with_ai utilise un modèle local (%s, %s). '
+            'Qualité non garantie équivalente au mode cloud — correction payante.',
+            provider.name, provider.model_name
+        )
+
     try:
-        client = openai.OpenAI()
-        
         prompt = f"""
         Évaluez cette réponse d'étudiant sur une échelle de 0 à {max_points} points.
         
@@ -408,13 +426,12 @@ def evaluate_essay_with_ai(question, user_response, expected_answer, max_points)
         Commentaires: [vos commentaires]
         """
         
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
+        ai_feedback = provider.generate(
+            prompt,
+            system="Vous êtes un correcteur pédagogique rigoureux et constructif pour la pensée critique.",
+            temperature=0.3,
             max_tokens=300
         )
-        
-        ai_feedback = response.choices[0].message.content
         
         # Extraire le score
         score_line = [line for line in ai_feedback.split('\n') if line.startswith('Score:')]
@@ -424,16 +441,22 @@ def evaluate_essay_with_ai(question, user_response, expected_answer, max_points)
         else:
             points_earned = max_points // 2  # Score par défaut
         
-        return ai_feedback, min(points_earned, max_points)
+        return ai_feedback, min(points_earned, max_points), provider_warning
     
     except Exception as e:
-        return f"Évaluation automatique non disponible. Réponse reçue et enregistrée.", max_points // 2
+        logger.error('Évaluation d\'essai par IA échouée (%s): %s', provider, e)
+        return f"Évaluation automatique non disponible. Réponse reçue et enregistrée.", max_points // 2, provider_warning
 
 def generate_ai_hint(question, user_response):
-    """Générer un indice IA"""
+    """Générer un indice IA (cloud ou edge)"""
+    provider = get_llm_provider()
+    if provider.is_edge:
+        logger.warning(
+            '[EDGE LLM] generate_ai_hint utilise un modèle local (%s, %s).',
+            provider.name, provider.model_name
+        )
+
     try:
-        client = openai.OpenAI()
-        
         prompt = f"""
         Un étudiant travaille sur cette question: {question}
         
@@ -443,15 +466,15 @@ def generate_ai_hint(question, user_response):
         Soyez encourageant et pédagogique.
         """
         
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
+        return provider.generate(
+            prompt,
+            system="Vous êtes un assistant pédagogique encourageant et bienveillant pour la pensée critique.",
+            temperature=0.5,
             max_tokens=150
         )
-        
-        return response.choices[0].message.content
     
     except Exception as e:
+        logger.error('Génération d\'indice IA échouée (%s): %s', provider, e)
         return "Désolé, l'assistant IA n'est pas disponible pour le moment. Continuez à réfléchir et n'hésitez pas à demander de l'aide à votre enseignant."
 
 def check_and_award_badges(user_id):

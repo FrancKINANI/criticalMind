@@ -7,10 +7,15 @@ from src.models.learning import LearningModule, Exercise, UserProgress
 from src.models.forum import ForumCategory, ForumTopic, ForumReply
 from src.models.gamification import Badge, UserBadge, UserPoints
 from src.models.analytics import AnalyticsEvent, AnalyticsMetric
+from src.models.setting import Setting
+from src.services.llm_provider import get_llm_settings, PROVIDER_DEFAULTS
 from src.utils.auth import token_required, role_required, organization_required
 from src.utils.validators import validate_json, validate_pagination_params, sanitize_input
 from datetime import datetime, timedelta
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, text
+import logging
+
+logger = logging.getLogger(__name__)
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -419,7 +424,8 @@ def get_system_health():
     # Vérifications de base
     db_status = 'healthy'
     try:
-        db.session.execute('SELECT 1')
+        # SQLAlchemy 2.x exige text() pour les requêtes en chaîne brute
+        db.session.execute(text('SELECT 1'))
     except Exception:
         db_status = 'error'
     
@@ -544,5 +550,66 @@ def update_organization_settings():
     return jsonify({
         'message': 'Settings updated successfully',
         'organization': organization.to_dict()
+    }), 200
+
+@admin_bp.route('/llm-settings', methods=['GET'])
+@token_required
+@organization_required
+@role_required('admin')
+def admin_get_llm_settings():
+    """Obtenir la configuration du provider LLM (cloud/edge)."""
+    setting = Setting.query.order_by(Setting.id.asc()).first()
+    if setting:
+        return jsonify({'settings': setting.to_dict()}), 200
+
+    # Aucune ligne en DB : renvoyer les réglages par défaut (env/constantes)
+    defaults = get_llm_settings()
+    return jsonify({
+        'settings': {
+            'id': None,
+            'provider': defaults['provider'],
+            'base_url': defaults['base_url'],
+            'model_name': defaults['model_name'],
+            'updated_at': None
+        }
+    }), 200
+
+@admin_bp.route('/llm-settings', methods=['PUT'])
+@token_required
+@organization_required
+@role_required('admin')
+def admin_update_llm_settings():
+    """Mettre à jour la configuration du provider LLM (cloud/edge)."""
+    data = request.get_json() or {}
+    requested_provider = (data.get('provider') or '').strip().lower()
+    if requested_provider and requested_provider not in PROVIDER_DEFAULTS:
+        return jsonify({'error': "provider doit être 'openai' ou 'ollama'"}), 400
+
+    # Bascule partielle : les champs absents sont complétés par les défauts du
+    # provider ciblé — sur une bascule provider-only (ex. openai -> ollama), on
+    # ne conserve PAS les réglages du provider précédent.
+    current = get_llm_settings()
+    provider = requested_provider or current['provider']
+    defaults = PROVIDER_DEFAULTS.get(provider, PROVIDER_DEFAULTS['openai'])
+    base_url = (data.get('base_url') or '').strip() or defaults['base_url']
+    model_name = (data.get('model_name') or '').strip() or defaults['model_name']
+
+    setting = Setting.query.order_by(Setting.id.asc()).first()
+    if not setting:
+        setting = Setting()
+        db.session.add(setting)
+
+    setting.provider = provider
+    setting.base_url = base_url
+    setting.model_name = model_name
+    db.session.commit()
+
+    logger.warning(
+        'Configuration LLM modifiée par l\'admin %s : provider=%s, model=%s, base_url=%s',
+        g.current_user.email, provider, model_name, base_url
+    )
+    return jsonify({
+        'message': 'LLM settings updated successfully',
+        'settings': setting.to_dict()
     }), 200
 

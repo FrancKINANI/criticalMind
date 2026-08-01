@@ -10,6 +10,7 @@ from .learning import LearningModule, Exercise, UserProgress, UserResponse
 from .gamification import Badge, UserBadge, UserPoints, Leaderboard
 from .forum import ForumCategory, ForumTopic, ForumReply
 from .notification import Notification
+from .setting import Setting
 from .analytics import AnalyticsEvent, AnalyticsMetric
 
 __all__ = [
@@ -32,6 +33,7 @@ __all__ = [
     'ForumTopic',
     'ForumReply',
     'Notification',
+    'Setting',
     'AnalyticsEvent',
     'AnalyticsMetric'
 ]

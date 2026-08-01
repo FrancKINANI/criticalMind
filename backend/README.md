@@ -48,7 +48,7 @@ Une plateforme d'apprentissage de la pensée critique alimentée par l'intellige
 - **ORM**: SQLAlchemy
 - **Authentification**: JWT
 - **Paiements**: Stripe
-- **IA**: OpenAI GPT-3.5-turbo
+- **IA**: Provider LLM interchangeable (OpenAI-compatible cloud / Ollama edge)
 - **Tests**: Pytest
 
 ### Structure du Projet
@@ -99,6 +99,9 @@ export STRIPE_SECRET_KEY="sk_test_..."
 export STRIPE_WEBHOOK_SECRET="whsec_..."
 export OPENAI_API_KEY="sk-..."
 export OPENAI_API_BASE="https://api.openai.com/v1"
+# Provider LLM (openai | ollama) — optionnel, défaut : openai
+# export LLM_PROVIDER="openai"
+# export LLM_MODEL="gpt-3.5-turbo"
 ```
 
 ### Démarrage
@@ -108,6 +111,16 @@ python src/main.py
 
 # L'API sera accessible sur http://localhost:5000
 ```
+
+### 🤖 Provider LLM interchangeable (cloud / edge)
+
+Le provider LLM (indices IA + correction d'essais) est abstrait dans `src/services/llm_provider.py` : `OpenAICompatibleProvider` (cloud, base_url configurable : OpenAI/OpenRouter/Mistral...) et `OllamaProvider` (edge local, `http://localhost:11434`). La bascule se fait via `GET/PUT /api/admin/llm-settings` (rôle admin) — table `settings` (`provider`, `base_url`, `model_name`) — ou via env (`LLM_PROVIDER`, `LLM_BASE_URL`, `LLM_MODEL`).
+
+**Ollama (edge)** : `ollama pull llama3.2:1b` (~1.3 Go, ~2-4 Go RAM recommandés, CPU seul suffisant), puis vérifier `curl http://localhost:11434`.
+
+**Warning qualité** : quand le provider actif est `ollama`, `POST /api/learning/exercises/<id>/submit` renvoie `"evaluation_warning": true` (correction d'essais = fonctionnalité payante) — afficher une mention *« évaluation générée par un modèle local, qualité non garantie équivalente au mode cloud »* tant que la parité n'est pas benchmarkée.
+
+> **Divergence avec smart_notes (documentée)** : smart_notes utilise QVAC (Node) ; ce repo reste 100% Python et privilégie Ollama pour garder une seule stack technique et éviter un microservice Node + workaround b4a.
 
 ## 🧪 Tests
 

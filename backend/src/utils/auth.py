@@ -19,7 +19,8 @@ class AuthManager:
             'user_id': user_id,
             'type': 'access',
             'iat': now,
-            'exp': now + timedelta(minutes=15)
+            'exp': now + timedelta(minutes=15),
+            'jti': str(uuid.uuid4())
         }
         access_token = jwt.encode(access_payload, current_app.config['SECRET_KEY'], algorithm='HS256')
         
@@ -28,7 +29,8 @@ class AuthManager:
             'user_id': user_id,
             'type': 'refresh',
             'iat': now,
-            'exp': now + timedelta(days=30)
+            'exp': now + timedelta(days=30),
+            'jti': str(uuid.uuid4())
         }
         refresh_token = jwt.encode(refresh_payload, current_app.config['SECRET_KEY'], algorithm='HS256')
         

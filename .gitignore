@@ -108,10 +108,13 @@ jspm_packages/
 .yarn-integrity
 
 # dotenv environment variable files
+.env
 .env.development.local
 .env.test.local
 .env.production.local
-.env.local
+.env.staging
+.env.production
+!.env.example
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -168,7 +171,7 @@ lerna-debug.log*
 *.db
 *.sqlite
 *.sqlite3
-backend/src/database/app.db
+backend/src/database/
 
 # Uploads
 uploads/

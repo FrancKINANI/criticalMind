@@ -127,10 +127,46 @@ STRIPE_PUBLISHABLE_KEY=pk_test_...
 OPENAI_API_KEY=your-openai-key
 MISTRAL_API_KEY=your-mistral-key
 
+# LLM provider (openai | ollama) — optional, defaults to openai
+LLM_PROVIDER=openai
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL=gpt-3.5-turbo
+
 # Email
 MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-app-password
 ```
+
+## 🤖 Provider LLM interchangeable (cloud / edge)
+
+Le provider LLM (génération d'indices IA et correction d'essais) est **abstrait et pilotable par configuration**, sans changement de code :
+
+- **Cloud** (défaut) : tout endpoint compatible avec l'API OpenAI — `base_url` configurable (OpenAI, OpenRouter, Mistral, vLLM, ...). Clé via `OPENAI_API_KEY`.
+- **Edge** : **Ollama** en local (`http://localhost:11434`), modèle configurable (ex. `llama3.2:1b`).
+
+La bascule se fait dans la base de données via `GET/PUT /api/admin/llm-settings` (rôle admin) :
+
+```json
+{ "provider": "ollama", "base_url": "http://localhost:11434", "model_name": "llama3.2:1b" }
+```
+
+À défaut de ligne en base, les valeurs par défaut viennent de l'environnement : `LLM_PROVIDER`, `LLM_BASE_URL` (ou `OPENAI_API_BASE`), `LLM_MODEL` (ou `OPENAI_MODEL`).
+
+### Prérequis Ollama (mode edge)
+
+1. Installer Ollama : [https://ollama.com](https://ollama.com) (Linux, macOS, Windows).
+2. Télécharger le modèle : `ollama pull llama3.2:1b` (~1.3 Go) — ordre de grandeur comparable au benchmark QVAC/smart_notes.
+3. Vérifier que le serveur répond : `curl http://localhost:11434`.
+
+**Dimensionnement attendu (llama3.2:1b)** : ~1.3 Go disque, ~2-4 Go RAM libre recommandés, CPU seul suffisant (réponse en quelques secondes par requête). Pour de meilleures corrections d'essais, préférer `llama3.2:3b` ou `qwen2.5:7b` (~8 Go RAM) si la machine le permet.
+
+### ⚠️ Warning qualité (correction d'essais — fonctionnalité payante)
+
+Quand le provider actif est `ollama` (edge), l'API renvoie `"evaluation_warning": true` sur `POST /api/learning/exercises/<id>/submit` et un warning explicite est émis dans les logs. Le frontend doit afficher un avertissement de type *« évaluation générée par un modèle local, qualité non garantie équivalente au mode cloud »* tant qu'aucun benchmark de qualité n'a validé la parité.
+
+### Divergence assumée avec smart_notes (choix documenté, pas un oubli)
+
+smart_notes utilise le SDK **QVAC (Node)** pour l'IA. Ce repo (criticalMind) est **100 % Python/Flask** : le provider edge choisi est **Ollama** via son API HTTP locale, ce qui évite d'introduire un microservice Node + le workaround b4a rencontré sur smart_notes, et conserve une seule stack technique. La cohérence transversale QVAC est volontairement sacrifiée au profit de la cohérence interne au repo — choix assumé et traçable dans le code (`backend/src/services/llm_provider.py`).
 
 ## 📱 Mobile & PWA Support
 
