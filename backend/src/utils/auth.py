@@ -7,14 +7,14 @@ from src.models import db
 from src.models.user import User, UserSession
 
 class AuthManager:
-    """Gestionnaire d'authentification pour CriticalMind SaaS"""
+    """Authentication manager for CriticalMind SaaS"""
     
     @staticmethod
     def generate_tokens(user_id):
-        """Génère les tokens d'accès et de rafraîchissement pour un utilisateur"""
+        """Generate access and refresh tokens for a user"""
         now = datetime.utcnow()
         
-        # Token d'accès (15 minutes)
+        # Access token (15 minutes)
         access_payload = {
             'user_id': user_id,
             'type': 'access',
@@ -24,7 +24,7 @@ class AuthManager:
         }
         access_token = jwt.encode(access_payload, current_app.config['SECRET_KEY'], algorithm='HS256')
         
-        # Token de rafraîchissement (30 jours)
+        # Refresh token (30 days)
         refresh_payload = {
             'user_id': user_id,
             'type': 'refresh',
@@ -34,7 +34,7 @@ class AuthManager:
         }
         refresh_token = jwt.encode(refresh_payload, current_app.config['SECRET_KEY'], algorithm='HS256')
         
-        # Créer une session utilisateur
+        # Create a user session
         session = UserSession(
             user_id=user_id,
             session_token=access_token,
@@ -47,13 +47,13 @@ class AuthManager:
         return {
             'access_token': access_token,
             'refresh_token': refresh_token,
-            'expires_in': 900,  # 15 minutes en secondes
+            'expires_in': 900,  # 15 minutes in seconds
             'token_type': 'Bearer'
         }
     
     @staticmethod
     def verify_token(token, token_type='access'):
-        """Vérifie et décode un token JWT"""
+        """Verify and decode a JWT token"""
         try:
             payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
             
@@ -68,14 +68,14 @@ class AuthManager:
     
     @staticmethod
     def refresh_access_token(refresh_token):
-        """Rafraîchit un token d'accès en utilisant le token de rafraîchissement"""
+        """Refresh an access token using the refresh token"""
         payload = AuthManager.verify_token(refresh_token, 'refresh')
         if not payload:
             return None
         
         user_id = payload['user_id']
         
-        # Vérifier que la session existe et est valide
+        # Check that the session exists and is valid
         session = UserSession.query.filter_by(
             user_id=user_id,
             refresh_token=refresh_token
@@ -84,10 +84,10 @@ class AuthManager:
         if not session or session.is_expired():
             return None
         
-        # Générer de nouveaux tokens
+        # Generate new tokens
         new_tokens = AuthManager.generate_tokens(user_id)
         
-        # Supprimer l'ancienne session
+        # Delete the old session
         db.session.delete(session)
         db.session.commit()
         
@@ -95,7 +95,7 @@ class AuthManager:
     
     @staticmethod
     def revoke_token(token):
-        """Révoque un token en supprimant la session associée"""
+        """Revoke a token by deleting the associated session"""
         payload = AuthManager.verify_token(token)
         if not payload:
             return False
@@ -114,12 +114,12 @@ class AuthManager:
     
     @staticmethod
     def revoke_all_user_tokens(user_id):
-        """Révoque tous les tokens d'un utilisateur"""
+        """Revoke all tokens of a user"""
         UserSession.query.filter_by(user_id=user_id).delete()
         db.session.commit()
 
 def token_required(f):
-    """Décorateur pour protéger les routes avec authentification JWT"""
+    """Decorator to protect routes with JWT authentication"""
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
@@ -138,7 +138,7 @@ def token_required(f):
         if not payload:
             return jsonify({'error': 'Token is invalid or expired'}), 401
         
-        # Vérifier que la session existe
+        # Check that the session exists
         session = UserSession.query.filter_by(
             user_id=payload['user_id'],
             session_token=token
@@ -147,7 +147,7 @@ def token_required(f):
         if not session or session.is_expired():
             return jsonify({'error': 'Session is invalid or expired'}), 401
         
-        # Charger l'utilisateur
+        # Load the user
         current_user = User.query.get(payload['user_id'])
         if not current_user or not current_user.is_active:
             return jsonify({'error': 'User not found or inactive'}), 401
@@ -160,7 +160,7 @@ def token_required(f):
     return decorated
 
 def role_required(*allowed_roles):
-    """Décorateur pour vérifier les rôles utilisateur"""
+    """Decorator to check user roles"""
     def decorator(f):
         @wraps(f)
         def decorated(*args, **kwargs):
@@ -176,7 +176,7 @@ def role_required(*allowed_roles):
     return decorator
 
 def permission_required(permission):
-    """Décorateur pour vérifier les permissions utilisateur"""
+    """Decorator to check user permissions"""
     def decorator(f):
         @wraps(f)
         def decorated(*args, **kwargs):
@@ -192,7 +192,7 @@ def permission_required(permission):
     return decorator
 
 def organization_required(f):
-    """Décorateur pour s'assurer que l'utilisateur appartient à une organisation"""
+    """Decorator to ensure the user belongs to an organization"""
     @wraps(f)
     def decorated(*args, **kwargs):
         if not hasattr(g, 'current_user'):

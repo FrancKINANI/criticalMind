@@ -13,7 +13,7 @@ forum_bp = Blueprint('forum', __name__)
 @token_required
 @organization_required
 def get_forum_categories():
-    """Obtenir les catégories du forum"""
+    """Get the forum categories"""
     categories = ForumCategory.query.filter_by(
         organization_id=g.current_user.organization_id,
         is_active=True
@@ -29,7 +29,7 @@ def get_forum_categories():
 @role_required('admin', 'teacher')
 @validate_json('name')
 def create_forum_category():
-    """Créer une nouvelle catégorie de forum"""
+    """Create a new forum category"""
     data = request.get_json()
     
     category = ForumCategory(
@@ -51,7 +51,7 @@ def create_forum_category():
 @token_required
 @organization_required
 def get_category_topics(category_id):
-    """Obtenir les sujets d'une catégorie"""
+    """Get the topics of a category"""
     page = request.args.get('page', 1)
     per_page = request.args.get('per_page', 20)
     
@@ -65,7 +65,7 @@ def get_category_topics(category_id):
     if not category:
         return jsonify({'error': 'Category not found'}), 404
     
-    # Ordonner par épinglés d'abord, puis par dernière réponse
+    # Order by pinned first, then by latest reply
     pagination = ForumTopic.query.filter_by(
         category_id=category_id
     ).order_by(
@@ -82,7 +82,7 @@ def get_category_topics(category_id):
     for topic in pagination.items:
         topic_data = topic.to_dict()
         
-        # Ajouter les informations de l'auteur
+        # Add the author information
         from src.models.user import User
         author = User.query.get(topic.user_id)
         if author:
@@ -112,7 +112,7 @@ def get_category_topics(category_id):
 @organization_required
 @validate_json('category_id', 'title', 'content')
 def create_topic():
-    """Créer un nouveau sujet de forum"""
+    """Create a new forum topic"""
     data = request.get_json()
     
     category = ForumCategory.query.filter_by(
@@ -133,12 +133,12 @@ def create_topic():
     db.session.add(topic)
     db.session.commit()
     
-    # Ajouter des points pour la création d'un sujet
+    # Add points for creating a topic
     user_points = UserPoints(
         user_id=g.current_user.id,
         points=5,
         source='forum_topic_created',
-        description=f'Sujet créé: {topic.title}'
+        description=f'Topic created: {topic.title}'
     )
     db.session.add(user_points)
     db.session.commit()
@@ -152,20 +152,20 @@ def create_topic():
 @token_required
 @organization_required
 def get_topic(topic_id):
-    """Obtenir un sujet avec ses réponses"""
+    """Get a topic with its replies"""
     topic = ForumTopic.query.get(topic_id)
     if not topic:
         return jsonify({'error': 'Topic not found'}), 404
     
-    # Vérifier l'accès
+    # Check access
     category = topic.category
     if category.organization_id != g.current_user.organization_id:
         return jsonify({'error': 'Access denied'}), 403
     
-    # Incrémenter le nombre de vues
+    # Increment the view count
     topic.increment_views()
     
-    # Obtenir les réponses paginées
+    # Get the paginated replies
     page = request.args.get('page', 1)
     per_page = request.args.get('per_page', 20)
     page, per_page = validate_pagination_params(page, per_page)
@@ -178,10 +178,10 @@ def get_topic(topic_id):
         error_out=False
     )
     
-    # Préparer les données du sujet
+    # Prepare the topic data
     topic_data = topic.to_dict()
     
-    # Ajouter les informations de l'auteur
+    # Add the author information
     from src.models.user import User
     author = User.query.get(topic.user_id)
     if author:
@@ -191,7 +191,7 @@ def get_topic(topic_id):
             'role': author.role
         }
     
-    # Ajouter les réponses avec les auteurs
+    # Add the replies with their authors
     replies = []
     for reply in replies_pagination.items:
         reply_data = reply.to_dict()
@@ -222,19 +222,19 @@ def get_topic(topic_id):
 @organization_required
 @validate_json('content')
 def create_reply(topic_id):
-    """Créer une réponse à un sujet"""
+    """Create a reply to a topic"""
     data = request.get_json()
     
     topic = ForumTopic.query.get(topic_id)
     if not topic:
         return jsonify({'error': 'Topic not found'}), 404
     
-    # Vérifier l'accès
+    # Check access
     category = topic.category
     if category.organization_id != g.current_user.organization_id:
         return jsonify({'error': 'Access denied'}), 403
     
-    # Vérifier si le sujet est verrouillé
+    # Check if the topic is locked
     if topic.is_locked:
         return jsonify({'error': 'Topic is locked'}), 403
     
@@ -246,25 +246,25 @@ def create_reply(topic_id):
     
     db.session.add(reply)
     
-    # Mettre à jour les statistiques du sujet
+    # Update the topic statistics
     topic.update_reply_stats()
     
-    # Ajouter des points pour la réponse
+    # Add points for the reply
     user_points = UserPoints(
         user_id=g.current_user.id,
         points=2,
         source='forum_reply_created',
-        description=f'Réponse dans: {topic.title}'
+        description=f'Reply in: {topic.title}'
     )
     db.session.add(user_points)
     
-    # Notifier l'auteur du sujet (si ce n'est pas lui-même)
+    # Notify the topic author (if it is not themselves)
     if topic.user_id != g.current_user.id:
         Notification.create_notification(
             user_id=topic.user_id,
             notification_type='reply_received',
-            title='Nouvelle réponse à votre sujet',
-            message=f'{g.current_user.full_name} a répondu à votre sujet "{topic.title}"',
+            title='New reply to your topic',
+            message=f'{g.current_user.full_name} replied to your topic "{topic.title}"',
             data={'topic_id': topic_id, 'reply_id': reply.id}
         )
     
@@ -279,36 +279,36 @@ def create_reply(topic_id):
 @token_required
 @organization_required
 def mark_reply_as_solution(reply_id):
-    """Marquer une réponse comme solution"""
+    """Mark a reply as the solution"""
     reply = ForumReply.query.get(reply_id)
     if not reply:
         return jsonify({'error': 'Reply not found'}), 404
     
     topic = reply.topic
     
-    # Seul l'auteur du sujet ou un admin/teacher peut marquer une solution
+    # Only the topic author or an admin/teacher can mark a solution
     if topic.user_id != g.current_user.id and g.current_user.role not in ['admin', 'teacher']:
         return jsonify({'error': 'Permission denied'}), 403
     
-    # Marquer comme solution
+    # Mark as solution
     reply.mark_as_solution()
     
-    # Ajouter des points bonus à l'auteur de la réponse
+    # Add bonus points to the reply author
     bonus_points = UserPoints(
         user_id=reply.user_id,
         points=10,
         source='solution_marked',
-        description=f'Solution acceptée dans: {topic.title}'
+        description=f'Solution accepted in: {topic.title}'
     )
     db.session.add(bonus_points)
     
-    # Notifier l'auteur de la réponse
+    # Notify the reply author
     if reply.user_id != g.current_user.id:
         Notification.create_notification(
             user_id=reply.user_id,
             notification_type='solution_marked',
-            title='Votre réponse a été marquée comme solution !',
-            message=f'Votre réponse dans "{topic.title}" a été acceptée comme solution',
+            title='Your reply was marked as the solution!',
+            message=f'Your reply in "{topic.title}" was accepted as the solution',
             data={'topic_id': topic.id, 'reply_id': reply.id}
         )
     
@@ -323,12 +323,12 @@ def mark_reply_as_solution(reply_id):
 @organization_required
 @role_required('admin', 'teacher')
 def pin_topic(topic_id):
-    """Épingler un sujet"""
+    """Pin a topic"""
     topic = ForumTopic.query.get(topic_id)
     if not topic:
         return jsonify({'error': 'Topic not found'}), 404
     
-    # Vérifier l'accès
+    # Check access
     category = topic.category
     if category.organization_id != g.current_user.organization_id:
         return jsonify({'error': 'Access denied'}), 403
@@ -348,12 +348,12 @@ def pin_topic(topic_id):
 @organization_required
 @role_required('admin', 'teacher')
 def lock_topic(topic_id):
-    """Verrouiller un sujet"""
+    """Lock a topic"""
     topic = ForumTopic.query.get(topic_id)
     if not topic:
         return jsonify({'error': 'Topic not found'}), 404
     
-    # Vérifier l'accès
+    # Check access
     category = topic.category
     if category.organization_id != g.current_user.organization_id:
         return jsonify({'error': 'Access denied'}), 403
@@ -372,7 +372,7 @@ def lock_topic(topic_id):
 @token_required
 @organization_required
 def search_forum():
-    """Rechercher dans le forum"""
+    """Search the forum"""
     query = request.args.get('q', '').strip()
     category_id = request.args.get('category_id')
     page = request.args.get('page', 1)
@@ -383,7 +383,7 @@ def search_forum():
     
     page, per_page = validate_pagination_params(page, per_page)
     
-    # Rechercher dans les sujets
+    # Search in topics
     topics_query = ForumTopic.query.join(ForumCategory).filter(
         ForumCategory.organization_id == g.current_user.organization_id,
         db.or_(
@@ -408,7 +408,7 @@ def search_forum():
         topic_data = topic.to_dict()
         topic_data['category'] = topic.category.to_dict()
         
-        # Ajouter les informations de l'auteur
+        # Add the author information
         from src.models.user import User
         author = User.query.get(topic.user_id)
         if author:
@@ -436,7 +436,7 @@ def search_forum():
 @forum_bp.route('/my-topics', methods=['GET'])
 @token_required
 def get_my_topics():
-    """Obtenir les sujets créés par l'utilisateur actuel"""
+    """Get the topics created by the current user"""
     page = request.args.get('page', 1)
     per_page = request.args.get('per_page', 20)
     

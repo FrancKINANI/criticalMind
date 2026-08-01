@@ -3,12 +3,12 @@ from functools import wraps
 from flask import request, jsonify
 
 def validate_email(email):
-    """Valide le format d'une adresse email"""
+    """Validate the format of an email address"""
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
 
 def validate_password(password):
-    """Valide la force d'un mot de passe"""
+    """Validate the strength of a password"""
     if len(password) < 8:
         return False, "Password must be at least 8 characters long"
     
@@ -27,7 +27,7 @@ def validate_password(password):
     return True, "Password is valid"
 
 def validate_json(*required_fields):
-    """Décorateur pour valider les données JSON requises"""
+    """Decorator to validate the required JSON data"""
     def decorator(f):
         @wraps(f)
         def decorated(*args, **kwargs):
@@ -55,7 +55,7 @@ def validate_json(*required_fields):
     return decorator
 
 def validate_organization_name(name):
-    """Valide le nom d'une organisation"""
+    """Validate an organization name"""
     if not name or len(name.strip()) < 2:
         return False, "Organization name must be at least 2 characters long"
     
@@ -65,7 +65,7 @@ def validate_organization_name(name):
     return True, "Organization name is valid"
 
 def validate_user_role(role):
-    """Valide le rôle d'un utilisateur"""
+    """Validate a user role"""
     valid_roles = ['admin', 'teacher', 'student', 'guest']
     if role not in valid_roles:
         return False, f"Role must be one of: {', '.join(valid_roles)}"
@@ -73,21 +73,21 @@ def validate_user_role(role):
     return True, "Role is valid"
 
 def sanitize_input(text, max_length=None):
-    """Nettoie et sanitise une entrée de texte"""
+    """Clean and sanitize a text input"""
     if not text:
         return ""
     
-    # Supprimer les espaces en début et fin
+    # Remove leading and trailing whitespace
     text = text.strip()
     
-    # Limiter la longueur si spécifiée
+    # Limit the length if specified
     if max_length and len(text) > max_length:
         text = text[:max_length]
     
     return text
 
 def validate_pagination_params(page=None, per_page=None):
-    """Valide les paramètres de pagination"""
+    """Validate the pagination parameters"""
     try:
         page = int(page) if page else 1
         per_page = int(per_page) if per_page else 20
@@ -97,7 +97,7 @@ def validate_pagination_params(page=None, per_page=None):
         
         if per_page < 1:
             per_page = 20
-        elif per_page > 100:  # Limiter à 100 éléments par page
+        elif per_page > 100:  # Limit to 100 items per page
             per_page = 100
         
         return page, per_page

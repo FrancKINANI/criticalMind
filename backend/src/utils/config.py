@@ -117,8 +117,8 @@ class TestingConfig(Config):
     TESTING = True
     FLASK_ENV = 'testing'
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
-    # SQLite en mémoire utilise StaticPool, qui n'accepte pas les options de
-    # pool QueuePool de la config de base (pool_timeout, max_overflow...)
+    # In-memory SQLite uses StaticPool, which does not accept the pool options
+    # of the base config's QueuePool (pool_timeout, max_overflow...)
     SQLALCHEMY_ENGINE_OPTIONS = {}
     WTF_CSRF_ENABLED = False
     SESSION_COOKIE_SECURE = False

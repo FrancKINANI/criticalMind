@@ -24,15 +24,15 @@ admin_bp = Blueprint('admin', __name__)
 @organization_required
 @role_required('admin')
 def get_admin_dashboard():
-    """Obtenir les données du tableau de bord administrateur"""
+    """Get the admin dashboard data"""
     org_id = g.current_user.organization_id
     
-    # Statistiques générales
+    # General statistics
     total_users = User.query.filter_by(organization_id=org_id, is_active=True).count()
     total_modules = LearningModule.query.filter_by(organization_id=org_id, is_active=True).count()
     total_topics = ForumTopic.query.join(ForumCategory).filter(ForumCategory.organization_id == org_id).count()
     
-    # Utilisateurs actifs (connectés dans les 30 derniers jours)
+    # Active users (logged in within the last 30 days)
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
     active_users = User.query.filter(
         User.organization_id == org_id,
@@ -40,12 +40,12 @@ def get_admin_dashboard():
         User.last_login >= thirty_days_ago
     ).count()
     
-    # Progression moyenne
+    # Average progress
     avg_progress = db.session.query(func.avg(UserProgress.completion_percentage)).join(User).filter(
         User.organization_id == org_id
     ).scalar() or 0
     
-    # Modules les plus populaires
+    # Most popular modules
     popular_modules = db.session.query(
         LearningModule.title,
         func.count(UserProgress.id).label('enrollments')
@@ -54,7 +54,7 @@ def get_admin_dashboard():
         LearningModule.is_active == True
     ).group_by(LearningModule.id).order_by(desc('enrollments')).limit(5).all()
     
-    # Activité récente (derniers 7 jours)
+    # Recent activity (last 7 days)
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
     recent_activity = {
         'new_users': User.query.filter(
@@ -95,7 +95,7 @@ def get_admin_dashboard():
 @organization_required
 @role_required('admin')
 def get_all_users():
-    """Obtenir tous les utilisateurs avec des détails administratifs"""
+    """Get all users with administrative details"""
     page = request.args.get('page', 1)
     per_page = request.args.get('per_page', 20)
     search = request.args.get('search', '')
@@ -106,7 +106,7 @@ def get_all_users():
     
     query = User.query.filter_by(organization_id=g.current_user.organization_id)
     
-    # Filtres
+    # Filters
     if search:
         search_term = f"%{search}%"
         query = query.filter(
@@ -135,7 +135,7 @@ def get_all_users():
     for user in pagination.items:
         user_data = user.to_dict()
         
-        # Ajouter des statistiques détaillées
+        # Add detailed statistics
         user_data['stats'] = {
             'modules_completed': UserProgress.query.filter_by(
                 user_id=user.id
@@ -170,7 +170,7 @@ def get_all_users():
 @organization_required
 @role_required('admin')
 def impersonate_user(user_id):
-    """Se connecter en tant qu'autre utilisateur (pour le support)"""
+    """Log in as another user (for support)"""
     target_user = User.query.filter_by(
         id=user_id,
         organization_id=g.current_user.organization_id
@@ -179,11 +179,11 @@ def impersonate_user(user_id):
     if not target_user:
         return jsonify({'error': 'User not found'}), 404
     
-    # Générer des tokens pour l'utilisateur cible
+    # Generate tokens for the target user
     from src.utils.auth import AuthManager
     tokens = AuthManager.generate_tokens(target_user.id)
     
-    # Enregistrer l'action d'impersonation
+    # Log the impersonation action
     AnalyticsEvent.track_event(
         event_type='admin_impersonation',
         organization_id=g.current_user.organization_id,
@@ -205,7 +205,7 @@ def impersonate_user(user_id):
 @organization_required
 @role_required('admin')
 def get_all_modules():
-    """Obtenir tous les modules avec des statistiques"""
+    """Get all modules with statistics"""
     page = request.args.get('page', 1)
     per_page = request.args.get('per_page', 20)
     
@@ -223,7 +223,7 @@ def get_all_modules():
     for module in pagination.items:
         module_data = module.to_dict()
         
-        # Ajouter des statistiques
+        # Add statistics
         module_data['stats'] = {
             'total_enrollments': UserProgress.query.filter_by(module_id=module.id).count(),
             'completions': UserProgress.query.filter_by(module_id=module.id).filter(
@@ -235,7 +235,7 @@ def get_all_modules():
             'exercises_count': Exercise.query.filter_by(module_id=module.id).count()
         }
         
-        # Calculer le taux de completion
+        # Calculate the completion rate
         if module_data['stats']['total_enrollments'] > 0:
             module_data['stats']['completion_rate'] = round(
                 module_data['stats']['completions'] / module_data['stats']['total_enrollments'] * 100, 2
@@ -262,7 +262,7 @@ def get_all_modules():
 @organization_required
 @role_required('admin')
 def toggle_module_status(module_id):
-    """Activer/désactiver un module"""
+    """Activate/deactivate a module"""
     module = LearningModule.query.filter_by(
         id=module_id,
         organization_id=g.current_user.organization_id
@@ -284,18 +284,18 @@ def toggle_module_status(module_id):
 @organization_required
 @role_required('admin')
 def get_forum_moderation():
-    """Obtenir les éléments nécessitant une modération"""
-    # Sujets récents
+    """Get the items requiring moderation"""
+    # Recent topics
     recent_topics = ForumTopic.query.join(ForumCategory).filter(
         ForumCategory.organization_id == g.current_user.organization_id
     ).order_by(ForumTopic.created_at.desc()).limit(10).all()
     
-    # Réponses récentes
+    # Recent replies
     recent_replies = ForumReply.query.join(ForumTopic).join(ForumCategory).filter(
         ForumCategory.organization_id == g.current_user.organization_id
     ).order_by(ForumReply.created_at.desc()).limit(10).all()
     
-    # Statistiques du forum
+    # Forum statistics
     forum_stats = {
         'total_topics': ForumTopic.query.join(ForumCategory).filter(
             ForumCategory.organization_id == g.current_user.organization_id
@@ -309,7 +309,7 @@ def get_forum_moderation():
         ).count()
     }
     
-    # Préparer les données
+    # Prepare the data
     topics_data = []
     for topic in recent_topics:
         topic_data = topic.to_dict()
@@ -338,8 +338,8 @@ def get_forum_moderation():
 @organization_required
 @role_required('admin')
 def get_analytics():
-    """Obtenir les analyses détaillées"""
-    period = request.args.get('period', '30')  # jours
+    """Get the detailed analytics"""
+    period = request.args.get('period', '30')  # days
     try:
         period_days = int(period)
     except ValueError:
@@ -348,7 +348,7 @@ def get_analytics():
     start_date = datetime.utcnow() - timedelta(days=period_days)
     org_id = g.current_user.organization_id
     
-    # Activité des utilisateurs
+    # User activity
     user_activity = db.session.query(
         func.date(AnalyticsEvent.created_at).label('date'),
         func.count(func.distinct(AnalyticsEvent.user_id)).label('active_users')
@@ -357,7 +357,7 @@ def get_analytics():
         AnalyticsEvent.created_at >= start_date
     ).group_by(func.date(AnalyticsEvent.created_at)).all()
     
-    # Modules complétés par jour
+    # Modules completed per day
     module_completions = db.session.query(
         func.date(UserProgress.completed_at).label('date'),
         func.count(UserProgress.id).label('completions')
@@ -367,7 +367,7 @@ def get_analytics():
         UserProgress.completed_at.isnot(None)
     ).group_by(func.date(UserProgress.completed_at)).all()
     
-    # Top utilisateurs par points
+    # Top users by points
     top_users = db.session.query(
         User.first_name,
         User.last_name,
@@ -377,7 +377,7 @@ def get_analytics():
         User.organization_id == org_id
     ).group_by(User.id).order_by(desc('total_points')).limit(10).all()
     
-    # Modules les plus populaires
+    # Most popular modules
     popular_modules = db.session.query(
         LearningModule.title,
         func.count(UserProgress.id).label('enrollments'),
@@ -420,16 +420,16 @@ def get_analytics():
 @organization_required
 @role_required('admin')
 def get_system_health():
-    """Obtenir l'état de santé du système"""
-    # Vérifications de base
+    """Get the system health status"""
+    # Basic checks
     db_status = 'healthy'
     try:
-        # SQLAlchemy 2.x exige text() pour les requêtes en chaîne brute
+        # SQLAlchemy 2.x requires text() for raw string queries
         db.session.execute(text('SELECT 1'))
     except Exception:
         db_status = 'error'
     
-    # Statistiques de la base de données
+    # Database statistics
     table_counts = {
         'users': User.query.filter_by(organization_id=g.current_user.organization_id).count(),
         'modules': LearningModule.query.filter_by(organization_id=g.current_user.organization_id).count(),
@@ -444,7 +444,7 @@ def get_system_health():
         ).count()
     }
     
-    # Vérifier l'abonnement
+    # Check the subscription
     subscription = Subscription.query.filter_by(
         organization_id=g.current_user.organization_id
     ).order_by(Subscription.created_at.desc()).first()
@@ -470,14 +470,14 @@ def get_system_health():
 @organization_required
 @role_required('admin')
 def export_users():
-    """Exporter les données des utilisateurs"""
+    """Export the users data"""
     users = User.query.filter_by(
         organization_id=g.current_user.organization_id
     ).all()
     
     export_data = []
     for user in users:
-        # Calculer les statistiques
+        # Calculate the statistics
         modules_completed = UserProgress.query.filter_by(
             user_id=user.id
         ).filter(UserProgress.completion_percentage >= 100).count()
@@ -510,7 +510,7 @@ def export_users():
 @organization_required
 @role_required('admin')
 def get_organization_settings():
-    """Obtenir les paramètres de l'organisation"""
+    """Get the organization settings"""
     organization = g.current_user.organization
     
     settings = {
@@ -536,7 +536,7 @@ def get_organization_settings():
 @role_required('admin')
 @validate_json('name')
 def update_organization_settings():
-    """Mettre à jour les paramètres de l'organisation"""
+    """Update the organization settings"""
     data = request.get_json()
     organization = g.current_user.organization
     
@@ -557,12 +557,12 @@ def update_organization_settings():
 @organization_required
 @role_required('admin')
 def admin_get_llm_settings():
-    """Obtenir la configuration du provider LLM (cloud/edge)."""
+    """Get the LLM provider configuration (cloud/edge)."""
     setting = Setting.query.order_by(Setting.id.asc()).first()
     if setting:
         return jsonify({'settings': setting.to_dict()}), 200
 
-    # Aucune ligne en DB : renvoyer les réglages par défaut (env/constantes)
+    # No row in DB: return the default settings (env/constants)
     defaults = get_llm_settings()
     return jsonify({
         'settings': {
@@ -579,15 +579,15 @@ def admin_get_llm_settings():
 @organization_required
 @role_required('admin')
 def admin_update_llm_settings():
-    """Mettre à jour la configuration du provider LLM (cloud/edge)."""
+    """Update the LLM provider configuration (cloud/edge)."""
     data = request.get_json() or {}
     requested_provider = (data.get('provider') or '').strip().lower()
     if requested_provider and requested_provider not in PROVIDER_DEFAULTS:
-        return jsonify({'error': "provider doit être 'openai' ou 'ollama'"}), 400
+        return jsonify({'error': "provider must be 'openai' or 'ollama'"}), 400
 
-    # Bascule partielle : les champs absents sont complétés par les défauts du
-    # provider ciblé — sur une bascule provider-only (ex. openai -> ollama), on
-    # ne conserve PAS les réglages du provider précédent.
+    # Partial switch: missing fields are completed with the defaults of the
+    # target provider — on a provider-only switch (e.g. openai -> ollama), the
+    # settings of the previous provider are NOT kept.
     current = get_llm_settings()
     provider = requested_provider or current['provider']
     defaults = PROVIDER_DEFAULTS.get(provider, PROVIDER_DEFAULTS['openai'])
@@ -605,7 +605,7 @@ def admin_update_llm_settings():
     db.session.commit()
 
     logger.warning(
-        'Configuration LLM modifiée par l\'admin %s : provider=%s, model=%s, base_url=%s',
+        'LLM configuration changed by admin %s: provider=%s, model=%s, base_url=%s',
         g.current_user.email, provider, model_name, base_url
     )
     return jsonify({

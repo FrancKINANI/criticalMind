@@ -5,10 +5,10 @@ from src.models.learning import LearningModule, Exercise, UserProgress
 from src.models.user import User
 
 class TestLearning:
-    """Tests pour le système d'apprentissage"""
+    """Tests for the learning system"""
     
     def test_create_learning_module(self, client, auth_headers):
-        """Test de création d'un module d'apprentissage"""
+        """Test creating a learning module"""
         response = client.post('/api/learning/modules', 
                               headers=auth_headers,
                               json={
@@ -30,8 +30,8 @@ class TestLearning:
         assert data['module']['difficulty_level'] == 2
     
     def test_get_learning_modules(self, client, auth_headers):
-        """Test de récupération des modules d'apprentissage"""
-        # Créer d'abord un module
+        """Test retrieving the learning modules"""
+        # First create a module
         client.post('/api/learning/modules', 
                    headers=auth_headers,
                    json={
@@ -49,8 +49,8 @@ class TestLearning:
         assert 'pagination' in data
     
     def test_get_learning_module_detail(self, client, auth_headers):
-        """Test de récupération des détails d'un module"""
-        # Créer un module
+        """Test retrieving a module's details"""
+        # Create a module
         create_response = client.post('/api/learning/modules', 
                                      headers=auth_headers,
                                      json={
@@ -71,8 +71,8 @@ class TestLearning:
         assert 'exercises' in data['module']
     
     def test_create_exercise(self, client, auth_headers):
-        """Test de création d'un exercice"""
-        # Créer d'abord un module
+        """Test creating an exercise"""
+        # First create a module
         module_response = client.post('/api/learning/modules', 
                                      headers=auth_headers,
                                      json={
@@ -102,8 +102,8 @@ class TestLearning:
         assert data['exercise']['exercise_type'] == 'multiple_choice'
     
     def test_submit_exercise_response_correct(self, client, auth_headers):
-        """Test de soumission d'une réponse correcte"""
-        # Créer module et exercice
+        """Test submitting a correct response"""
+        # Create module and exercise
         module_response = client.post('/api/learning/modules', 
                                      headers=auth_headers,
                                      json={
@@ -126,7 +126,7 @@ class TestLearning:
         
         exercise_id = exercise_response.get_json()['exercise']['id']
         
-        # Soumettre une réponse correcte
+        # Submit a correct response
         response = client.post(f'/api/learning/exercises/{exercise_id}/submit',
                               headers=auth_headers,
                               json={'response': '8'})
@@ -138,8 +138,8 @@ class TestLearning:
         assert data['points_earned'] == 10
     
     def test_submit_exercise_response_incorrect(self, client, auth_headers):
-        """Test de soumission d'une réponse incorrecte"""
-        # Créer module et exercice
+        """Test submitting an incorrect response"""
+        # Create module and exercise
         module_response = client.post('/api/learning/modules', 
                                      headers=auth_headers,
                                      json={
@@ -162,7 +162,7 @@ class TestLearning:
         
         exercise_id = exercise_response.get_json()['exercise']['id']
         
-        # Soumettre une réponse incorrecte
+        # Submit an incorrect response
         response = client.post(f'/api/learning/exercises/{exercise_id}/submit',
                               headers=auth_headers,
                               json={'response': '7'})
@@ -173,7 +173,7 @@ class TestLearning:
         assert data['points_earned'] == 0
     
     def test_get_user_progress(self, client, auth_headers):
-        """Test de récupération de la progression utilisateur"""
+        """Test retrieving the user progress"""
         response = client.get('/api/learning/progress', headers=auth_headers)
         
         assert response.status_code == 200
@@ -182,8 +182,8 @@ class TestLearning:
         assert 'pagination' in data
     
     def test_duplicate_exercise_response(self, client, auth_headers):
-        """Test de soumission de réponse en double"""
-        # Créer module et exercice
+        """Test submitting a duplicate response"""
+        # Create module and exercise
         module_response = client.post('/api/learning/modules', 
                                      headers=auth_headers,
                                      json={
@@ -206,12 +206,12 @@ class TestLearning:
         
         exercise_id = exercise_response.get_json()['exercise']['id']
         
-        # Première soumission
+        # First submission
         client.post(f'/api/learning/exercises/{exercise_id}/submit',
                    headers=auth_headers,
                    json={'response': '4'})
         
-        # Tentative de deuxième soumission
+        # Attempt a second submission
         response = client.post(f'/api/learning/exercises/{exercise_id}/submit',
                               headers=auth_headers,
                               json={'response': '4'})
@@ -221,7 +221,7 @@ class TestLearning:
         assert 'Response already submitted' in data['error']
     
     def test_student_cannot_create_module(self, client, student_headers):
-        """Test qu'un étudiant ne peut pas créer de module"""
+        """Test that a student cannot create a module"""
         response = client.post('/api/learning/modules', 
                               headers=student_headers,
                               json={

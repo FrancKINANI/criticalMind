@@ -1,178 +1,177 @@
-# Guide d'Utilisation - CriticalMind SaaS
+# User Guide - CriticalMind SaaS
 
-**Version :** 1.0  
-**Date :** 29 juillet 2025  
-**Auteur :** Manus AI
+**Version:** 1.0  
+**Date:** July 29, 2025  
+**Author:** Manus AI
 
-## Table des Matières
+## Table of Contents
 
-1. [Introduction à CriticalMind](#introduction)
-2. [Premiers pas](#premiers-pas)
-3. [Interface utilisateur](#interface-utilisateur)
-4. [Modules d'apprentissage](#modules-dapprentissage)
-5. [Exercices et évaluations](#exercices-et-évaluations)
-6. [Forum collaboratif](#forum-collaboratif)
-7. [Système de gamification](#système-de-gamification)
-8. [Gestion du profil](#gestion-du-profil)
-9. [Fonctionnalités avancées](#fonctionnalités-avancées)
-10. [Support et assistance](#support-et-assistance)
+1. [Introduction to CriticalMind](#introduction)
+2. [Getting Started](#getting-started)
+3. [User Interface](#user-interface)
+4. [Learning Modules](#learning-modules)
+5. [Exercises and Assessments](#exercises-and-assessments)
+6. [Collaborative Forum](#collaborative-forum)
+7. [Gamification System](#gamification-system)
+8. [Profile Management](#profile-management)
+9. [Advanced Features](#advanced-features)
+10. [Support and Assistance](#support-and-assistance)
 
 ---
 
 ## Introduction
 
-Bienvenue dans CriticalMind, votre plateforme d'apprentissage de la pensée critique alimentée par l'intelligence artificielle. Cette solution innovante vous accompagne dans le développement de vos compétences analytiques et de raisonnement critique à travers des modules interactifs, des exercices personnalisés, et une communauté d'apprentissage collaborative.
+Welcome to CriticalMind, your AI-powered critical thinking learning platform. This innovative solution supports you in developing your analytical and critical reasoning skills through interactive modules, personalized exercises, and a collaborative learning community.
 
-CriticalMind s'adresse aux étudiants, professionnels, et organisations souhaitant améliorer leurs capacités de réflexion critique, d'analyse de problèmes, et de prise de décision éclairée. La plateforme combine pédagogie moderne, intelligence artificielle, et gamification pour créer une expérience d'apprentissage engageante et efficace.
+CriticalMind is designed for students, professionals, and organizations looking to improve their critical thinking, problem analysis, and informed decision-making abilities. The platform combines modern pedagogy, artificial intelligence, and gamification to create an engaging and effective learning experience.
 
-### Fonctionnalités principales
+### Main features
 
-- **Modules d'apprentissage interactifs** : Contenu structuré avec progression personnalisée
-- **Évaluation IA** : Feedback intelligent sur vos réponses et suggestions d'amélioration
-- **Forum collaboratif** : Échanges avec la communauté et apprentissage social
-- **Gamification** : Points, badges, et classements pour maintenir la motivation
-- **Suivi de progression** : Analytics détaillés de votre parcours d'apprentissage
-- **Accès multi-plateforme** : Interface responsive adaptée à tous vos appareils
+- **Interactive learning modules**: Structured content with personalized progression
+- **AI assessment**: Intelligent feedback on your answers and improvement suggestions
+- **Collaborative forum**: Exchanges with the community and social learning
+- **Gamification**: Points, badges, and leaderboards to maintain motivation
+- **Progress tracking**: Detailed analytics of your learning journey
+- **Multi-platform access**: Responsive interface adapted to all your devices
 
-## Premiers pas
+## Getting Started
 
-### Inscription et connexion
+### Registration and login
 
-L'inscription à CriticalMind est simple et rapide. Rendez-vous sur la page d'accueil et cliquez sur "S'inscrire". Renseignez vos informations personnelles : nom, prénom, adresse email, et créez un mot de passe sécurisé respectant les critères de complexité (8 caractères minimum, majuscules, minuscules, chiffres, caractères spéciaux).
+Registering on CriticalMind is simple and fast. Go to the home page and click "Sign up". Fill in your personal information: last name, first name, email address, and create a secure password meeting the complexity criteria (8 characters minimum, uppercase, lowercase, numbers, special characters).
 
-Si vous rejoignez une organisation existante, votre administrateur vous fournira un lien d'invitation spécifique. Dans le cas contraire, vous créerez automatiquement une nouvelle organisation dont vous deviendrez l'administrateur. Cette flexibilité permet une adoption rapide que vous soyez utilisateur individuel ou représentant d'une institution.
+If you are joining an existing organization, your administrator will provide you with a specific invitation link. Otherwise, you will automatically create a new organization of which you become the administrator. This flexibility allows for rapid adoption whether you are an individual user or a representative of an institution.
 
-Une fois inscrit, vous recevrez un email de confirmation pour valider votre compte. Cliquez sur le lien de validation puis connectez-vous avec vos identifiants. La première connexion déclenche un parcours d'onboarding personnalisé qui vous guide à travers les principales fonctionnalités de la plateforme.
+Once registered, you will receive a confirmation email to validate your account. Click the validation link, then log in with your credentials. The first login triggers a personalized onboarding journey that guides you through the platform's main features.
 
-### Configuration du profil
+### Profile setup
 
-Complétez votre profil utilisateur en ajoutant une photo, une description personnelle, et vos domaines d'intérêt. Ces informations enrichissent votre expérience communautaire et permettent aux autres utilisateurs de mieux vous connaître. Configurez vos préférences de notification pour recevoir les alertes importantes sans être submergé par les communications.
+Complete your user profile by adding a photo, a personal description, and your areas of interest. This information enriches your community experience and allows other users to get to know you better. Configure your notification preferences to receive important alerts without being overwhelmed by communications.
 
-La section "Objectifs d'apprentissage" vous permet de définir vos priorités et d'orienter les recommandations de contenu. Indiquez votre niveau actuel en pensée critique et vos domaines de prédilection pour bénéficier d'un parcours personnalisé dès le départ.
+The "Learning Goals" section lets you define your priorities and steer content recommendations. Indicate your current level of critical thinking and your preferred areas to benefit from a personalized journey from the start.
 
-## Interface utilisateur
+## User Interface
 
-### Navigation principale
+### Main navigation
 
-L'interface de CriticalMind est conçue pour une navigation intuitive et efficace. La barre de navigation principale donne accès aux sections essentielles : Tableau de bord, Modules, Forum, Progression, et Profil. Un menu utilisateur en haut à droite permet l'accès rapide aux paramètres et à la déconnexion.
+CriticalMind's interface is designed for intuitive and efficient navigation. The main navigation bar provides access to the essential sections: Dashboard, Modules, Forum, Progress, and Profile. A user menu in the top right corner provides quick access to settings and logout.
 
-Le tableau de bord central présente une vue d'ensemble de votre activité : modules en cours, progression récente, notifications importantes, et recommandations personnalisées. Cette page d'accueil s'adapte à votre utilisation pour mettre en avant les informations les plus pertinentes.
+The central dashboard presents an overview of your activity: modules in progress, recent progress, important notifications, and personalized recommendations. This home page adapts to your usage to highlight the most relevant information.
 
-### Fonctionnalités de recherche
+### Search features
 
-La barre de recherche globale permet de trouver rapidement du contenu spécifique : modules, exercices, discussions du forum, ou utilisateurs. Les filtres avancés affinent les résultats selon vos critères : niveau de difficulté, durée, sujet, date de création. Les recherches récentes sont mémorisées pour un accès rapide aux contenus consultés.
+The global search bar lets you quickly find specific content: modules, exercises, forum discussions, or users. Advanced filters refine results according to your criteria: difficulty level, duration, topic, creation date. Recent searches are remembered for quick access to consulted content.
 
-La fonction de recherche intelligente utilise l'IA pour comprendre vos intentions et suggérer du contenu pertinent même avec des requêtes approximatives. Cette fonctionnalité s'améliore avec l'usage en apprenant de vos préférences et comportements de navigation.
+The smart search function uses AI to understand your intent and suggest relevant content even with approximate queries. This feature improves with use by learning from your preferences and browsing behavior.
 
-## Modules d'apprentissage
+## Learning Modules
 
-### Structure des modules
+### Module structure
 
-Chaque module d'apprentissage suit une progression pédagogique structurée en sections thématiques. L'introduction présente les objectifs d'apprentissage, les prérequis, et la durée estimée. Le contenu principal alterne théorie, exemples pratiques, et exercices d'application pour maintenir l'engagement et faciliter l'assimilation.
+Each learning module follows a pedagogical progression structured into thematic sections. The introduction presents the learning objectives, prerequisites, and estimated duration. The main content alternates between theory, practical examples, and application exercises to maintain engagement and facilitate assimilation.
 
-Les modules intègrent différents types de médias : textes explicatifs, schémas illustratifs, vidéos pédagogiques, et simulations interactives. Cette variété répond aux différents styles d'apprentissage et maintient l'intérêt tout au long du parcours. Les ressources complémentaires offrent des approfondissements optionnels pour les apprenants motivés.
+Modules integrate different types of media: explanatory texts, illustrative diagrams, educational videos, and interactive simulations. This variety caters to different learning styles and maintains interest throughout the journey. Supplementary resources offer optional deeper dives for motivated learners.
 
-### Progression et suivi
+### Progress and tracking
 
-Votre progression dans chaque module est suivie automatiquement avec des indicateurs visuels clairs. La barre de progression globale montre votre avancement, tandis que les indicateurs sectoriels détaillent votre maîtrise de chaque concept. Les sections complétées sont marquées d'une coche verte, les sections en cours d'un point orange.
+Your progress in each module is tracked automatically with clear visual indicators. The global progress bar shows your advancement, while sectional indicators detail your mastery of each concept. Completed sections are marked with a green checkmark, in-progress sections with an orange dot.
 
-Le système adapte automatiquement le rythme selon vos performances et votre disponibilité. Si vous éprouvez des difficultés sur un concept, des exercices supplémentaires sont proposés. À l'inverse, si vous maîtrisez rapidement un sujet, vous pouvez accélérer vers les concepts suivants.
+The system automatically adapts the pace according to your performance and availability. If you struggle with a concept, additional exercises are offered. Conversely, if you quickly master a topic, you can speed up to the next concepts.
 
-### Recommandations personnalisées
+### Personalized recommendations
 
-L'algorithme de recommandation analyse votre profil d'apprentissage pour suggérer les modules les plus adaptés à vos objectifs et niveau actuel. Ces suggestions évoluent en permanence selon vos progrès et préférences manifestées. Les modules recommandés sont mis en avant sur votre tableau de bord avec une explication de leur pertinence.
+The recommendation algorithm analyzes your learning profile to suggest the modules best suited to your goals and current level. These suggestions evolve constantly based on your progress and expressed preferences. Recommended modules are highlighted on your dashboard with an explanation of their relevance.
 
-Le système identifie également vos lacunes potentielles et propose des modules de renforcement. Cette approche proactive vous aide à construire des bases solides avant d'aborder des concepts plus avancés.
+The system also identifies your potential gaps and proposes reinforcement modules. This proactive approach helps you build solid foundations before tackling more advanced concepts.
 
-## Exercices et évaluations
+## Exercises and Assessments
 
-### Types d'exercices
+### Types of exercises
 
-CriticalMind propose une variété d'exercices adaptés aux différents aspects de la pensée critique. Les questions à choix multiples testent votre compréhension des concepts théoriques avec des distracteurs soigneusement conçus pour identifier les malentendus courants. Les réponses courtes évaluent votre capacité à synthétiser et exprimer clairement vos idées.
+CriticalMind offers a variety of exercises suited to the different aspects of critical thinking. Multiple-choice questions test your understanding of theoretical concepts with carefully designed distractors to identify common misunderstandings. Short answers assess your ability to synthesize and clearly express your ideas.
 
-Les exercices d'analyse de cas vous confrontent à des situations réelles nécessitant l'application des méthodes de pensée critique. Ces exercices développent votre capacité à identifier les enjeux, analyser les arguments, et proposer des solutions raisonnées. Les essais argumentés permettent d'approfondir votre réflexion et de développer vos compétences rédactionnelles.
+Case analysis exercises confront you with real situations requiring the application of critical thinking methods. These exercises develop your ability to identify issues, analyze arguments, and propose reasoned solutions. Argumentative essays allow you to deepen your reflection and develop your writing skills.
 
-### Évaluation par intelligence artificielle
+### AI-powered assessment
 
-L'innovation majeure de CriticalMind réside dans son système d'évaluation automatisée par IA pour les exercices ouverts. Lorsque vous soumettez un essai ou une analyse, l'intelligence artificielle examine votre raisonnement, évalue la cohérence de votre argumentation, et identifie les points forts et axes d'amélioration.
+CriticalMind's major innovation lies in its automated AI assessment system for open-ended exercises. When you submit an essay or analysis, the artificial intelligence examines your reasoning, evaluates the coherence of your argumentation, and identifies strengths and areas for improvement.
 
-Le feedback IA est personnalisé et constructif, pointant spécifiquement les aspects réussis de votre réponse et suggérant des pistes d'amélioration concrètes. Cette évaluation instantanée vous permet d'ajuster votre approche immédiatement et d'intégrer les conseils dans vos exercices suivants.
+The AI feedback is personalized and constructive, specifically pointing out the successful aspects of your response and suggesting concrete improvement paths. This instant assessment lets you adjust your approach immediately and incorporate the advice into your next exercises.
 
-### Système d'indices et d'aide
+### Hint and help system
 
-Si vous rencontrez des difficultés sur un exercice, le système d'indices progressifs vous guide vers la solution sans donner directement la réponse. Ces indices sont générés dynamiquement par l'IA en fonction de votre réponse partielle et des erreurs communes identifiées.
+If you encounter difficulties on an exercise, the progressive hint system guides you toward the solution without directly giving the answer. These hints are dynamically generated by the AI based on your partial response and identified common mistakes.
 
-L'assistant IA peut également répondre à vos questions spécifiques sur les exercices, expliquant les concepts sous-jacents ou clarifiant les consignes. Cette aide contextuelle vous permet de progresser de manière autonome tout en bénéficiant d'un support personnalisé.
+The AI assistant can also answer your specific questions about exercises, explaining underlying concepts or clarifying instructions. This contextual help lets you progress autonomously while benefiting from personalized support.
 
-## Forum collaboratif
+## Collaborative Forum
 
-### Participation aux discussions
+### Participating in discussions
 
-Le forum de CriticalMind favorise l'apprentissage social et l'échange d'idées entre apprenants. Participez aux discussions existantes en apportant vos perspectives, posez des questions sur les concepts difficiles, ou lancez de nouveaux sujets de débat. La diversité des points de vue enrichit la compréhension collective et stimule la réflexion critique.
+CriticalMind's forum fosters social learning and the exchange of ideas among learners. Participate in existing discussions by bringing your perspectives, ask questions about difficult concepts, or start new debate topics. The diversity of viewpoints enriches collective understanding and stimulates critical thinking.
 
-Respectez la charte de bonne conduite du forum : restez courtois, argumentez de manière constructive, citez vos sources, et évitez les attaques personnelles. Cette atmosphère bienveillante encourage la participation de tous et maintient un niveau de discussion élevé.
+Respect the forum's code of conduct: stay courteous, argue constructively, cite your sources, and avoid personal attacks. This supportive atmosphere encourages everyone's participation and maintains a high level of discussion.
 
-### Outils de collaboration
+### Collaboration tools
 
-Le forum intègre des outils avancés pour faciliter la collaboration : création de groupes de travail, partage de documents, organisation d'événements virtuels. Ces fonctionnalités transforment le forum en véritable espace de travail collaboratif où les projets de groupe peuvent se développer naturellement.
+The forum integrates advanced tools to facilitate collaboration: creation of working groups, document sharing, organization of virtual events. These features transform the forum into a true collaborative workspace where group projects can develop naturally.
 
-Le système de mentions permet d'interpeller spécifiquement d'autres utilisateurs dans vos messages, facilitant les échanges ciblés. Les notifications vous alertent des réponses à vos messages et des mentions de votre nom, maintenant votre engagement dans les discussions actives.
+The mention system lets you specifically call out other users in your messages, facilitating targeted exchanges. Notifications alert you to replies to your messages and mentions of your name, keeping you engaged in active discussions.
 
-### Reconnaissance communautaire
+### Community recognition
 
-Vos contributions de qualité au forum sont reconnues par la communauté via un système de votes et de marquage des meilleures réponses. Les réponses utiles accumulent des votes positifs, augmentant votre réputation communautaire. Les solutions aux problèmes posés peuvent être marquées comme telles par les auteurs des questions, vous faisant gagner des points bonus.
+Your quality contributions to the forum are recognized by the community through a voting system and marking of best answers. Helpful answers accumulate positive votes, increasing your community reputation. Solutions to posted problems can be marked as such by question authors, earning you bonus points.
 
-Cette reconnaissance sociale motive la participation constructive et identifie les experts communautaires vers lesquels orienter les questions complexes. Votre réputation forum influence également vos recommandations de contenu et vos opportunités de mentorat.
+This social recognition motivates constructive participation and identifies community experts to whom complex questions can be directed. Your forum reputation also influences your content recommendations and mentoring opportunities.
 
-## Système de gamification
+## Gamification System
 
-### Points et récompenses
+### Points and rewards
 
-Chaque action d'apprentissage vous fait gagner des points selon un système équilibré qui valorise l'effort et la qualité. Compléter un exercice rapporte des points de base, avec des bonus pour les réponses particulièrement bien argumentées. La participation au forum, l'aide aux autres apprenants, et la régularité d'utilisation génèrent également des points.
+Each learning action earns you points through a balanced system that values effort and quality. Completing an exercise awards base points, with bonuses for particularly well-argued answers. Forum participation, helping other learners, and regularity of use also generate points.
 
-Les points ne sont pas qu'un score : ils débloquent l'accès à du contenu premium, des fonctionnalités avancées, et des privilèges communautaires. Cette progression tangible maintient la motivation à long terme et récompense l'investissement dans l'apprentissage.
+Points are not just a score: they unlock access to premium content, advanced features, and community privileges. This tangible progression maintains long-term motivation and rewards investment in learning.
 
-### Badges et accomplissements
+### Badges and achievements
 
-Les badges reconnaissent vos accomplissements significatifs et jalonnent votre parcours d'apprentissage. Le badge "Premier pas" célèbre votre premier module complété, tandis que "Penseur critique" récompense la maîtrise de concepts avancés. Les badges sociaux comme "Mentor" ou "Collaborateur" valorisent vos contributions à la communauté.
+Badges recognize your significant achievements and mark milestones in your learning journey. The "First Step" badge celebrates your first completed module, while "Critical Thinker" rewards mastery of advanced concepts. Social badges like "Mentor" or "Collaborator" value your contributions to the community.
 
-Chaque badge débloqué s'accompagne d'une notification de félicitations et d'une explication de sa signification. Votre collection de badges est visible sur votre profil public, témoignant de vos compétences et motivations auprès de la communauté.
+Each unlocked badge comes with a congratulations notification and an explanation of its meaning. Your badge collection is visible on your public profile, demonstrating your skills and motivations to the community.
 
-### Classements et défis
+### Leaderboards and challenges
 
-Les classements créent une émulation positive entre apprenants tout en préservant un esprit de collaboration. Consultez votre position dans différents classements : global, par cohorte, par période, ou par compétence spécifique. Ces classements motivent la progression tout en identifiant les modèles à suivre.
+Leaderboards create positive emulation among learners while preserving a collaborative spirit. Check your position in different rankings: global, by cohort, by period, or by specific skill. These rankings motivate progress while identifying role models to follow.
 
-Les défis quotidiens proposent des objectifs courts et variés pour maintenir l'engagement : compléter 3 exercices, obtenir 100% de bonnes réponses, aider un autre apprenant. Ces micro-objectifs rendent l'apprentissage ludique et créent des habitudes positives.
+Daily challenges offer short, varied objectives to maintain engagement: complete 3 exercises, get 100% correct answers, help another learner. These micro-objectives make learning fun and create positive habits.
 
-## Gestion du profil
+## Profile Management
 
-### Paramètres personnels
+### Personal settings
 
-Personnalisez votre expérience CriticalMind via les paramètres de profil. Modifiez vos informations personnelles, ajustez vos préférences de notification, et configurez vos objectifs d'apprentissage. Ces paramètres influencent les recommandations de contenu et l'adaptation de l'interface à vos besoins.
+Personalize your CriticalMind experience through the profile settings. Modify your personal information, adjust your notification preferences, and configure your learning goals. These settings influence content recommendations and interface adaptation to your needs.
 
-La section confidentialité vous permet de contrôler la visibilité de vos informations et activités. Choisissez ce que les autres utilisateurs peuvent voir de votre profil, vos statistiques, et vos participations au forum. Cette granularité respecte votre vie privée tout en permettant les interactions sociales souhaitées.
+The privacy section lets you control the visibility of your information and activities. Choose what other users can see of your profile, your statistics, and your forum participation. This granularity respects your privacy while enabling the desired social interactions.
 
-### Suivi de progression
+### Progress tracking
 
-Votre tableau de bord personnel présente des analytics détaillés de votre parcours d'apprentissage. Visualisez votre progression globale, vos domaines de force et d'amélioration, votre évolution dans le temps. Ces insights vous aident à ajuster votre stratégie d'apprentissage et à célébrer vos progrès.
+Your personal dashboard presents detailed analytics of your learning journey. View your overall progress, your areas of strength and improvement, and your evolution over time. These insights help you adjust your learning strategy and celebrate your progress.
 
-Les graphiques interactifs détaillent vos performances par module, type d'exercice, et période. Identifiez vos patterns d'apprentissage optimaux : moments de la journée les plus productifs, types de contenu préférés, rythme de progression idéal.
+Interactive charts detail your performance by module, exercise type, and period. Identify your optimal learning patterns: most productive times of day, preferred content types, ideal progression pace.
 
-## Support et assistance
+## Support and Assistance
 
-### Ressources d'aide
+### Help resources
 
-CriticalMind met à votre disposition de nombreuses ressources pour vous accompagner : documentation complète, tutoriels vidéo, FAQ détaillée, et guides de démarrage rapide. Ces ressources sont organisées par thème et niveau de complexité pour une consultation efficace.
+CriticalMind provides many resources to support you: complete documentation, video tutorials, detailed FAQ, and quick-start guides. These resources are organized by theme and complexity level for efficient consultation.
 
-La base de connaissances est régulièrement enrichie avec les questions fréquentes et les bonnes pratiques identifiées par la communauté. Un moteur de recherche intelligent vous aide à trouver rapidement les informations pertinentes.
+The knowledge base is regularly enriched with frequently asked questions and best practices identified by the community. A smart search engine helps you quickly find relevant information.
 
-### Contact et assistance
+### Contact and support
 
-Pour toute question non couverte par la documentation, contactez notre équipe support via le formulaire intégré ou l'email dédié. Nos experts pédagogiques et techniques répondent rapidement avec des solutions personnalisées à vos besoins spécifiques.
+For any question not covered by the documentation, contact our support team via the built-in form or dedicated email. Our pedagogical and technical experts respond quickly with personalized solutions to your specific needs.
 
-Le support premium offre une assistance prioritaire avec des temps de réponse garantis et un accompagnement personnalisé pour optimiser votre utilisation de la plateforme. Cette option est particulièrement adaptée aux organisations avec des besoins spécifiques ou des déploiements à grande échelle.
+Premium support offers priority assistance with guaranteed response times and personalized guidance to optimize your use of the platform. This option is particularly suited to organizations with specific needs or large-scale deployments.
 
 ---
 
-**Guide rédigé par Manus AI - Version 1.0 - 29 juillet 2025**
-
+**Guide written by Manus AI - Version 1.0 - July 29, 2025**

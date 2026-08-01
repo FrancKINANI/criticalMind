@@ -11,7 +11,7 @@ payments_bp = Blueprint('payments', __name__)
 
 @payments_bp.route('/plans', methods=['GET'])
 def get_subscription_plans():
-    """Obtenir tous les plans d'abonnement disponibles"""
+    """Get all the available subscription plans"""
     plans = SubscriptionPlan.query.filter_by(is_active=True).all()
     
     return jsonify({
@@ -23,10 +23,10 @@ def get_subscription_plans():
 @role_required('admin')
 @validate_json('name', 'price', 'billing_cycle')
 def create_subscription_plan():
-    """Créer un nouveau plan d'abonnement (admin seulement)"""
+    """Create a new subscription plan (admin only)"""
     data = request.get_json()
     
-    # Créer le produit dans Stripe
+    # Create the product in Stripe
     stripe_result = stripe_client.create_product(
         name=data['name'],
         description=data.get('description', '')
@@ -37,7 +37,7 @@ def create_subscription_plan():
     
     stripe_product = stripe_result['product']
     
-    # Créer le prix dans Stripe
+    # Create the price in Stripe
     amount_in_cents = int(float(data['price']) * 100)
     price_result = stripe_client.create_price(
         product_id=stripe_product.id,
@@ -51,7 +51,7 @@ def create_subscription_plan():
     
     stripe_price = price_result['price']
     
-    # Créer le plan dans la base de données
+    # Create the plan in the database
     plan = SubscriptionPlan(
         name=data['name'],
         description=data.get('description'),
@@ -76,7 +76,7 @@ def create_subscription_plan():
 @organization_required
 @validate_json('plan_id')
 def create_subscription():
-    """Créer un nouvel abonnement pour l'organisation"""
+    """Create a new subscription for the organization"""
     data = request.get_json()
     
     plan = SubscriptionPlan.query.get(data['plan_id'])
@@ -85,7 +85,7 @@ def create_subscription():
     
     organization = g.current_user.organization
     
-    # Vérifier s'il y a déjà un abonnement actif
+    # Check if there is already an active subscription
     existing_subscription = Subscription.query.filter_by(
         organization_id=organization.id,
         status='active'
@@ -94,7 +94,7 @@ def create_subscription():
     if existing_subscription:
         return jsonify({'error': 'Organization already has an active subscription'}), 409
     
-    # Créer ou récupérer le client Stripe
+    # Create or retrieve the Stripe customer
     stripe_customer_result = stripe_client.create_customer(
         email=g.current_user.email,
         name=organization.name,
@@ -109,8 +109,8 @@ def create_subscription():
     
     stripe_customer = stripe_customer_result['customer']
     
-    # Créer l'abonnement Stripe
-    trial_days = data.get('trial_days', 14)  # 14 jours d'essai par défaut
+    # Create the Stripe subscription
+    trial_days = data.get('trial_days', 14)  # 14 days trial by default
     subscription_result = stripe_client.create_subscription(
         customer_id=stripe_customer.id,
         price_id=plan.stripe_price_id,
@@ -122,7 +122,7 @@ def create_subscription():
     
     stripe_subscription = subscription_result['subscription']
     
-    # Créer l'abonnement dans la base de données
+    # Create the subscription in the database
     subscription = Subscription(
         organization_id=organization.id,
         plan_id=plan.id,
@@ -134,7 +134,7 @@ def create_subscription():
     
     db.session.add(subscription)
     
-    # Mettre à jour l'organisation
+    # Update the organization
     organization.subscription_plan = plan.name
     organization.subscription_status = stripe_subscription.status
     
@@ -151,7 +151,7 @@ def create_subscription():
 @token_required
 @organization_required
 def get_current_subscription():
-    """Obtenir l'abonnement actuel de l'organisation"""
+    """Get the organization's current subscription"""
     subscription = Subscription.query.filter_by(
         organization_id=g.current_user.organization_id
     ).order_by(Subscription.created_at.desc()).first()
@@ -159,12 +159,12 @@ def get_current_subscription():
     if not subscription:
         return jsonify({'error': 'No subscription found'}), 404
     
-    # Synchroniser avec Stripe
+    # Sync with Stripe
     stripe_result = stripe_client.retrieve_subscription(subscription.stripe_subscription_id)
     if stripe_result['success']:
         stripe_subscription = stripe_result['subscription']
         
-        # Mettre à jour le statut local
+        # Update the local status
         subscription.status = stripe_subscription.status
         subscription.current_period_start = datetime.fromtimestamp(stripe_subscription.current_period_start)
         subscription.current_period_end = datetime.fromtimestamp(stripe_subscription.current_period_end)
@@ -185,7 +185,7 @@ def get_current_subscription():
 @role_required('admin')
 @validate_json('plan_id')
 def change_subscription_plan():
-    """Changer le plan d'abonnement"""
+    """Change the subscription plan"""
     data = request.get_json()
     
     new_plan = SubscriptionPlan.query.get(data['plan_id'])
@@ -200,7 +200,7 @@ def change_subscription_plan():
     if not subscription:
         return jsonify({'error': 'No active subscription found'}), 404
     
-    # Mettre à jour l'abonnement dans Stripe
+    # Update the subscription in Stripe
     stripe_result = stripe_client.update_subscription(
         subscription_id=subscription.stripe_subscription_id,
         price_id=new_plan.stripe_price_id
@@ -209,7 +209,7 @@ def change_subscription_plan():
     if not stripe_result['success']:
         return jsonify({'error': f'Stripe error: {stripe_result["error"]}'}), 400
     
-    # Mettre à jour dans la base de données
+    # Update in the database
     subscription.plan_id = new_plan.id
     g.current_user.organization.subscription_plan = new_plan.name
     
@@ -225,7 +225,7 @@ def change_subscription_plan():
 @organization_required
 @role_required('admin')
 def cancel_subscription():
-    """Annuler l'abonnement"""
+    """Cancel the subscription"""
     data = request.get_json()
     immediately = data.get('immediately', False)
     
@@ -237,7 +237,7 @@ def cancel_subscription():
     if not subscription:
         return jsonify({'error': 'No active subscription found'}), 404
     
-    # Annuler dans Stripe
+    # Cancel in Stripe
     stripe_result = stripe_client.cancel_subscription(
         subscription_id=subscription.stripe_subscription_id,
         immediately=immediately
@@ -248,7 +248,7 @@ def cancel_subscription():
     
     stripe_subscription = stripe_result['subscription']
     
-    # Mettre à jour dans la base de données
+    # Update in the database
     if immediately:
         subscription.status = 'canceled'
         g.current_user.organization.subscription_status = 'canceled'
@@ -266,7 +266,7 @@ def cancel_subscription():
 @token_required
 @organization_required
 def get_invoices():
-    """Obtenir les factures de l'organisation"""
+    """Get the organization's invoices"""
     page = request.args.get('page', 1)
     per_page = request.args.get('per_page', 20)
     
@@ -299,7 +299,7 @@ def get_invoices():
 @organization_required
 @role_required('admin')
 def create_billing_portal_session():
-    """Créer une session du portail de facturation Stripe"""
+    """Create a Stripe billing portal session"""
     subscription = Subscription.query.filter_by(
         organization_id=g.current_user.organization_id
     ).order_by(Subscription.created_at.desc()).first()
@@ -307,7 +307,7 @@ def create_billing_portal_session():
     if not subscription:
         return jsonify({'error': 'No subscription found'}), 404
     
-    # Récupérer l'abonnement Stripe pour obtenir le customer_id
+    # Retrieve the Stripe subscription to get the customer_id
     stripe_result = stripe_client.retrieve_subscription(subscription.stripe_subscription_id)
     if not stripe_result['success']:
         return jsonify({'error': 'Failed to retrieve subscription'}), 400
@@ -315,7 +315,7 @@ def create_billing_portal_session():
     customer_id = stripe_result['subscription'].customer
     return_url = request.get_json().get('return_url', 'https://app.criticalmind.com/billing')
     
-    # Créer la session du portail
+    # Create the portal session
     portal_result = stripe_client.create_billing_portal_session(
         customer_id=customer_id,
         return_url=return_url
@@ -330,7 +330,7 @@ def create_billing_portal_session():
 
 @payments_bp.route('/webhook', methods=['POST'])
 def stripe_webhook():
-    """Gérer les webhooks Stripe"""
+    """Handle Stripe webhooks"""
     payload = request.get_data()
     signature = request.headers.get('Stripe-Signature')
     
@@ -338,7 +338,7 @@ def stripe_webhook():
     if not event:
         return jsonify({'error': 'Invalid webhook signature'}), 400
     
-    # Traiter les différents types d'événements
+    # Process the different event types
     if event['type'] == 'invoice.payment_succeeded':
         handle_payment_succeeded(event['data']['object'])
     elif event['type'] == 'invoice.payment_failed':
@@ -351,7 +351,7 @@ def stripe_webhook():
     return jsonify({'status': 'success'}), 200
 
 def handle_payment_succeeded(invoice):
-    """Gérer un paiement réussi"""
+    """Handle a successful payment"""
     subscription_id = invoice.get('subscription')
     if not subscription_id:
         return
@@ -361,7 +361,7 @@ def handle_payment_succeeded(invoice):
     ).first()
     
     if subscription:
-        # Créer ou mettre à jour la facture
+        # Create or update the invoice
         invoice_record = Invoice.query.filter_by(
             stripe_invoice_id=invoice['id']
         ).first()
@@ -371,7 +371,7 @@ def handle_payment_succeeded(invoice):
                 organization_id=subscription.organization_id,
                 subscription_id=subscription.id,
                 stripe_invoice_id=invoice['id'],
-                amount=invoice['amount_paid'] / 100,  # Convertir de centimes
+                amount=invoice['amount_paid'] / 100,  # Convert from cents
                 currency=invoice['currency'],
                 status='paid',
                 invoice_date=datetime.fromtimestamp(invoice['created']),
@@ -382,14 +382,14 @@ def handle_payment_succeeded(invoice):
             invoice_record.status = 'paid'
             invoice_record.paid_at = datetime.fromtimestamp(invoice['status_transitions']['paid_at'])
         
-        # Mettre à jour le statut de l'abonnement
+        # Update the subscription status
         subscription.status = 'active'
         subscription.organization.subscription_status = 'active'
         
         db.session.commit()
 
 def handle_payment_failed(invoice):
-    """Gérer un échec de paiement"""
+    """Handle a failed payment"""
     subscription_id = invoice.get('subscription')
     if not subscription_id:
         return
@@ -399,11 +399,11 @@ def handle_payment_failed(invoice):
     ).first()
     
     if subscription:
-        # Mettre à jour le statut
+        # Update the status
         subscription.status = 'past_due'
         subscription.organization.subscription_status = 'past_due'
         
-        # Créer la facture avec le statut failed
+        # Create the invoice with the failed status
         invoice_record = Invoice(
             organization_id=subscription.organization_id,
             subscription_id=subscription.id,
@@ -417,7 +417,7 @@ def handle_payment_failed(invoice):
         db.session.commit()
 
 def handle_subscription_updated(subscription_data):
-    """Gérer la mise à jour d'un abonnement"""
+    """Handle a subscription update"""
     subscription = Subscription.query.filter_by(
         stripe_subscription_id=subscription_data['id']
     ).first()
@@ -433,7 +433,7 @@ def handle_subscription_updated(subscription_data):
         db.session.commit()
 
 def handle_subscription_deleted(subscription_data):
-    """Gérer la suppression d'un abonnement"""
+    """Handle a subscription deletion"""
     subscription = Subscription.query.filter_by(
         stripe_subscription_id=subscription_data['id']
     ).first()

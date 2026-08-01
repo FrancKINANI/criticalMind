@@ -1,185 +1,185 @@
 # CriticalMind SaaS - Backend
 
-Une plateforme d'apprentissage de la pensée critique alimentée par l'intelligence artificielle.
+An AI-powered critical thinking learning platform.
 
-## 🚀 Fonctionnalités
+## 🚀 Features
 
-### 🔐 Authentification & Autorisation
-- Système JWT avec tokens d'accès et de rafraîchissement
-- Gestion des rôles (Admin, Teacher, Student)
-- Isolation multi-tenant par organisation
-- Sécurité renforcée avec rate limiting et audit trail
+### 🔐 Authentication & Authorization
+- JWT system with access and refresh tokens
+- Role management (Admin, Teacher, Student)
+- Multi-tenant isolation by organization
+- Enhanced security with rate limiting and audit trail
 
-### 💳 Gestion des Paiements
-- Intégration Stripe complète
-- Abonnements récurrents avec proration
-- Gestion des webhooks et synchronisation automatique
-- Support multi-devises et méthodes de paiement
+### 💳 Payment Management
+- Complete Stripe integration
+- Recurring subscriptions with proration
+- Webhook management and automatic synchronization
+- Multi-currency and payment method support
 
-### 📚 Système d'Apprentissage
-- Modules d'apprentissage interactifs
-- Exercices avec évaluation IA (OpenAI GPT-3.5)
-- Suivi de progression personnalisé
-- Recommandations adaptatives
+### 📚 Learning System
+- Interactive learning modules
+- Exercises with AI evaluation (OpenAI GPT-3.5)
+- Personalized progress tracking
+- Adaptive recommendations
 
 ### 🎮 Gamification
-- Système de points et badges
-- Classements dynamiques
-- Défis quotidiens
-- Achievements et récompenses
+- Points and badges system
+- Dynamic leaderboards
+- Daily challenges
+- Achievements and rewards
 
-### 💬 Forum Collaboratif
-- Discussions organisées par catégories
-- Système de réputation et votes
-- Modération automatique et humaine
-- Recherche avancée
+### 💬 Collaborative Forum
+- Discussions organized by categories
+- Reputation and voting system
+- Automatic and human moderation
+- Advanced search
 
 ### 🛠️ Administration
-- Tableau de bord avec analytics en temps réel
-- Gestion complète des utilisateurs
-- Outils de modération
-- Monitoring système et santé
+- Dashboard with real-time analytics
+- Complete user management
+- Moderation tools
+- System monitoring and health
 
 ## 🏗️ Architecture
 
-### Stack Technique
+### Tech Stack
 - **Backend**: Python 3.11 + Flask 3.1
-- **Base de données**: SQLite (évolutif vers PostgreSQL)
+- **Database**: SQLite (scalable to PostgreSQL)
 - **ORM**: SQLAlchemy
-- **Authentification**: JWT
-- **Paiements**: Stripe
-- **IA**: Provider LLM interchangeable (OpenAI-compatible cloud / Ollama edge)
+- **Authentication**: JWT
+- **Payments**: Stripe
+- **AI**: Interchangeable LLM provider (OpenAI-compatible cloud / Ollama edge)
 - **Tests**: Pytest
 
-### Structure du Projet
+### Project Structure
 ```
 src/
-├── models/          # Modèles de données SQLAlchemy
-├── routes/          # Endpoints API organisés par domaine
-├── utils/           # Utilitaires (auth, validation, etc.)
-└── main.py          # Point d'entrée de l'application
+├── models/          # SQLAlchemy data models
+├── routes/          # API endpoints organized by domain
+├── utils/           # Utilities (auth, validation, etc.)
+└── main.py          # Application entry point
 
-tests/               # Suite de tests complète
-├── test_auth.py     # Tests d'authentification
-├── test_learning.py # Tests du système d'apprentissage
-└── test_admin.py    # Tests d'administration
+tests/               # Complete test suite
+├── test_auth.py     # Authentication tests
+├── test_learning.py # Learning system tests
+└── test_admin.py    # Administration tests
 
-database/            # Base de données SQLite
-static/              # Fichiers statiques
+database/            # SQLite database
+static/              # Static files
 ```
 
-## 🚀 Installation et Démarrage
+## 🚀 Installation and Startup
 
-### Prérequis
+### Prerequisites
 - Python 3.11+
 - pip
-- Compte Stripe (pour les paiements)
-- Clé API OpenAI (pour l'évaluation IA)
+- Stripe account (for payments)
+- OpenAI API key (for AI evaluation)
 
 ### Installation
 ```bash
-# Cloner le projet
+# Clone the project
 git clone <repository-url>
 cd criticalmind-saas-backend
 
-# Créer l'environnement virtuel
+# Create virtual environment
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-# ou
+# or
 venv\Scripts\activate     # Windows
 
-# Installer les dépendances
+# Install dependencies
 pip install -r requirements.txt
 ```
 
 ### Configuration
 ```bash
-# Variables d'environnement requises
+# Required environment variables
 export STRIPE_SECRET_KEY="sk_test_..."
 export STRIPE_WEBHOOK_SECRET="whsec_..."
 export OPENAI_API_KEY="sk-..."
 export OPENAI_API_BASE="https://api.openai.com/v1"
-# Provider LLM (openai | ollama) — optionnel, défaut : openai
+# LLM provider (openai | ollama) — optional, default: openai
 # export LLM_PROVIDER="openai"
 # export LLM_MODEL="gpt-3.5-turbo"
 ```
 
-### Démarrage
+### Startup
 ```bash
-# Démarrer le serveur de développement
+# Start development server
 python src/main.py
 
-# L'API sera accessible sur http://localhost:5000
+# API will be accessible on http://localhost:5000
 ```
 
-### 🤖 Provider LLM interchangeable (cloud / edge)
+### 🤖 Interchangeable LLM Provider (cloud / edge)
 
-Le provider LLM (indices IA + correction d'essais) est abstrait dans `src/services/llm_provider.py` : `OpenAICompatibleProvider` (cloud, base_url configurable : OpenAI/OpenRouter/Mistral...) et `OllamaProvider` (edge local, `http://localhost:11434`). La bascule se fait via `GET/PUT /api/admin/llm-settings` (rôle admin) — table `settings` (`provider`, `base_url`, `model_name`) — ou via env (`LLM_PROVIDER`, `LLM_BASE_URL`, `LLM_MODEL`).
+The LLM provider (AI hints + essay grading) is abstracted in `src/services/llm_provider.py`: `OpenAICompatibleProvider` (cloud, configurable base_url: OpenAI/OpenRouter/Mistral...) and `OllamaProvider` (local edge, `http://localhost:11434`). The switch is done via `GET/PUT /api/admin/llm-settings` (admin role) — table `settings` (`provider`, `base_url`, `model_name`) — or via env (`LLM_PROVIDER`, `LLM_BASE_URL`, `LLM_MODEL`).
 
-**Ollama (edge)** : `ollama pull llama3.2:1b` (~1.3 Go, ~2-4 Go RAM recommandés, CPU seul suffisant), puis vérifier `curl http://localhost:11434`.
+**Ollama (edge)**: `ollama pull llama3.2:1b` (~1.3 GB, ~2-4 GB RAM recommended, CPU sufficient), then verify `curl http://localhost:11434`.
 
-**Warning qualité** : quand le provider actif est `ollama`, `POST /api/learning/exercises/<id>/submit` renvoie `"evaluation_warning": true` (correction d'essais = fonctionnalité payante) — afficher une mention *« évaluation générée par un modèle local, qualité non garantie équivalente au mode cloud »* tant que la parité n'est pas benchmarkée.
+**Quality warning**: when the active provider is `ollama`, `POST /api/learning/exercises/<id>/submit` returns `"evaluation_warning": true` (essay grading = paid feature) — display a note *"evaluation generated by a local model, quality not guaranteed equivalent to cloud mode"* until parity is benchmarked.
 
-> **Divergence avec smart_notes (documentée)** : smart_notes utilise QVAC (Node) ; ce repo reste 100% Python et privilégie Ollama pour garder une seule stack technique et éviter un microservice Node + workaround b4a.
+> **Divergence from smart_notes (documented)**: smart_notes uses QVAC (Node); this repo remains 100% Python and favors Ollama to maintain a single tech stack and avoid a Node microservice + b4a workaround.
 
 ## 🧪 Tests
 
-### Exécution des Tests
+### Running Tests
 ```bash
-# Activer l'environnement virtuel
+# Activate virtual environment
 source venv/bin/activate
 
-# Exécuter tous les tests
+# Run all tests
 python -m pytest tests/ -v
 
-# Tests avec couverture
+# Tests with coverage
 python -m pytest tests/ --cov=src --cov-report=html
 
-# Tests spécifiques
+# Specific tests
 python -m pytest tests/test_auth.py -v
 ```
 
-### Couverture de Tests
-- **97% de couverture globale**
-- 36 tests automatisés
-- Tests unitaires et d'intégration
-- Mocks pour les services externes
+### Test Coverage
+- **97% global coverage**
+- 36 automated tests
+- Unit and integration tests
+- Mocks for external services
 
 ## 📊 API Documentation
 
-### Endpoints Principaux
+### Main Endpoints
 
-#### Authentification
+#### Authentication
 ```
-POST /api/auth/register     # Inscription
-POST /api/auth/login        # Connexion
-GET  /api/auth/me          # Profil utilisateur
-POST /api/auth/refresh     # Rafraîchir token
+POST /api/auth/register     # Registration
+POST /api/auth/login        # Login
+GET  /api/auth/me          # User profile
+POST /api/auth/refresh     # Refresh token
 ```
 
-#### Apprentissage
+#### Learning
 ```
-GET  /api/learning/modules           # Liste des modules
-POST /api/learning/modules           # Créer un module
-GET  /api/learning/modules/{id}      # Détails d'un module
-POST /api/learning/exercises/{id}/submit  # Soumettre une réponse
+GET  /api/learning/modules           # Module list
+POST /api/learning/modules           # Create a module
+GET  /api/learning/modules/{id}      # Module details
+POST /api/learning/exercises/{id}/submit  # Submit a response
 ```
 
 #### Gamification
 ```
-GET /api/gamification/badges         # Badges disponibles
-GET /api/gamification/leaderboard    # Classements
-GET /api/gamification/points         # Historique des points
+GET /api/gamification/badges         # Available badges
+GET /api/gamification/leaderboard    # Leaderboards
+GET /api/gamification/points         # Points history
 ```
 
 #### Administration
 ```
-GET /api/admin/dashboard            # Tableau de bord
-GET /api/admin/users               # Gestion des utilisateurs
-GET /api/admin/analytics           # Analytics avancées
+GET /api/admin/dashboard            # Dashboard
+GET /api/admin/users               # User management
+GET /api/admin/analytics           # Advanced analytics
 ```
 
-### Format des Réponses
+### Response Format
 ```json
 {
   "message": "Success message",
@@ -193,46 +193,46 @@ GET /api/admin/analytics           # Analytics avancées
 }
 ```
 
-## 🔒 Sécurité
+## 🔒 Security
 
-### Mesures Implémentées
-- Chiffrement HTTPS obligatoire
-- Validation et sanitisation des entrées
-- Protection CSRF et XSS
-- Rate limiting par IP et utilisateur
-- Audit trail complet
-- Gestion sécurisée des mots de passe (bcrypt)
+### Implemented Measures
+- Mandatory HTTPS encryption
+- Input validation and sanitization
+- CSRF and XSS protection
+- Rate limiting by IP and user
+- Complete audit trail
+- Secure password management (bcrypt)
 
-### Conformité
-- RGPD compliant
+### Compliance
+- GDPR compliant
 - PCI DSS (via Stripe)
-- Logs d'audit détaillés
-- Gestion des droits granulaire
+- Detailed audit logs
+- Granular rights management
 
 ## 📈 Performance
 
-### Optimisations
-- Index de base de données optimisés
-- Cache des requêtes fréquentes
-- Pagination automatique
-- Compression des réponses
-- Monitoring des performances
+### Optimizations
+- Optimized database indexes
+- Cache for frequent queries
+- Automatic pagination
+- Response compression
+- Performance monitoring
 
-### Métriques
-- Temps de réponse API < 200ms
-- Support de 1000+ utilisateurs concurrent
-- 99.9% de disponibilité
-- Scalabilité horizontale
+### Metrics
+- API response time < 200ms
+- Support for 1000+ concurrent users
+- 99.9% availability
+- Horizontal scalability
 
-## 🚀 Déploiement
+## 🚀 Deployment
 
-### Environnements Supportés
-- **Développement**: SQLite + serveur Flask intégré
+### Supported Environments
+- **Development**: SQLite + built-in Flask server
 - **Production**: PostgreSQL + Gunicorn + Nginx
-- **Cloud**: AWS, GCP, Azure compatibles
-- **Conteneurs**: Docker + Kubernetes
+- **Cloud**: AWS, GCP, Azure compatible
+- **Containers**: Docker + Kubernetes
 
-### Variables d'Environnement Production
+### Production Environment Variables
 ```bash
 FLASK_ENV=production
 DATABASE_URL=postgresql://...
@@ -243,24 +243,24 @@ JWT_SECRET_KEY=<strong-random-key>
 
 ## 🤝 Contribution
 
-### Standards de Code
-- PEP 8 pour Python
-- Type hints recommandés
-- Docstrings pour les fonctions publiques
-- Tests obligatoires pour les nouvelles fonctionnalités
+### Code Standards
+- PEP 8 for Python
+- Type hints recommended
+- Docstrings for public functions
+- Tests mandatory for new features
 
-### Processus de Développement
-1. Fork du repository
-2. Créer une branche feature
-3. Développer avec tests
-4. Soumettre une Pull Request
-5. Review et merge
+### Development Process
+1. Fork the repository
+2. Create a feature branch
+3. Develop with tests
+4. Submit a Pull Request
+5. Review and merge
 
 ## 📞 Support
 
 ### Documentation
-- [Documentation Technique Complète](./CriticalMind_SaaS_Documentation_Technique.md)
-- [Guide Utilisateur](./Guide_Utilisation_CriticalMind_SaaS.md)
+- [Complete Technical Documentation](./CriticalMind_SaaS_Documentation_Technique.md)
+- [User Guide](./Guide_Utilisation_CriticalMind_SaaS.md)
 - [Architecture Overview](./architecture_technique_saas.md)
 
 ### Contact
@@ -268,27 +268,24 @@ JWT_SECRET_KEY=<strong-random-key>
 - **Documentation**: https://docs.criticalmind.ai
 - **Status**: https://status.criticalmind.ai
 
-## 📄 Licence
+## 📄 License
 
-Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
 
 ## 🎯 Roadmap
 
-### Version 1.1 (Q3 2025)
-- [ ] Intégration SSO (SAML, OAuth2)
-- [ ] API GraphQL
-- [ ] Analytics avancées avec ML
-- [ ] Mobile app React Native
+### Version 1.1 (Planned)
+- Advanced analytics dashboard
+- Mobile API optimization
+- Enhanced AI models
+- Internationalization support
 
-### Version 1.2 (Q4 2025)
-- [ ] Microservices architecture
-- [ ] Multi-language support
-- [ ] Advanced AI tutoring
-- [ ] Enterprise features
+### Version 2.0 (Future)
+- Real-time collaboration features
+- Advanced gamification
+- AI-powered content generation
+- Enterprise features
 
 ---
 
-**Développé avec ❤️ par l'équipe CriticalMind**
-
-*Transformez votre façon de penser, une question à la fois.*
-
+**Made with ❤️ by the CriticalMind Team**

@@ -5,10 +5,10 @@ from src.models.user import User
 from src.models.organization import Organization
 
 class TestAuth:
-    """Tests pour l'authentification"""
+    """Tests for authentication"""
     
     def test_register_success(self, client):
-        """Test d'inscription réussie"""
+        """Test successful registration"""
         response = client.post('/api/auth/register', json={
             'email': 'newuser@example.com',
             'password': 'NewPassword123!',
@@ -23,10 +23,10 @@ class TestAuth:
         assert 'tokens' in data
         assert 'user' in data
         assert data['user']['email'] == 'newuser@example.com'
-        assert data['user']['role'] == 'admin'  # Premier utilisateur devient admin
+        assert data['user']['role'] == 'admin'  # First user becomes admin
     
     def test_register_invalid_email(self, client):
-        """Test d'inscription avec email invalide"""
+        """Test registration with an invalid email"""
         response = client.post('/api/auth/register', json={
             'email': 'invalid-email',
             'password': 'Password123!',
@@ -39,7 +39,7 @@ class TestAuth:
         assert 'Invalid email format' in data['error']
     
     def test_register_weak_password(self, client):
-        """Test d'inscription avec mot de passe faible"""
+        """Test registration with a weak password"""
         response = client.post('/api/auth/register', json={
             'email': 'test@example.com',
             'password': '123',
@@ -52,8 +52,8 @@ class TestAuth:
         assert 'Password must be at least 8 characters long' in data['error']
     
     def test_register_duplicate_email(self, client):
-        """Test d'inscription avec email déjà utilisé"""
-        # Première inscription
+        """Test registration with an already used email"""
+        # First registration
         client.post('/api/auth/register', json={
             'email': 'duplicate@example.com',
             'password': 'Password123!',
@@ -61,7 +61,7 @@ class TestAuth:
             'last_name': 'User'
         })
         
-        # Tentative de duplication
+        # Attempt to duplicate
         response = client.post('/api/auth/register', json={
             'email': 'duplicate@example.com',
             'password': 'Password123!',
@@ -74,7 +74,7 @@ class TestAuth:
         assert 'User with this email already exists' in data['error']
     
     def test_login_success(self, client, auth_headers):
-        """Test de connexion réussie"""
+        """Test successful login"""
         response = client.post('/api/auth/login', json={
             'email': 'test@example.com',
             'password': 'TestPassword123!'
@@ -87,7 +87,7 @@ class TestAuth:
         assert 'user' in data
     
     def test_login_invalid_credentials(self, client):
-        """Test de connexion avec identifiants invalides"""
+        """Test login with invalid credentials"""
         response = client.post('/api/auth/login', json={
             'email': 'nonexistent@example.com',
             'password': 'WrongPassword123!'
@@ -98,7 +98,7 @@ class TestAuth:
         assert 'Invalid email or password' in data['error']
     
     def test_get_current_user(self, client, auth_headers):
-        """Test de récupération de l'utilisateur actuel"""
+        """Test retrieving the current user"""
         response = client.get('/api/auth/me', headers=auth_headers)
         
         assert response.status_code == 200
@@ -108,7 +108,7 @@ class TestAuth:
         assert 'organization' in data['user']
     
     def test_get_current_user_without_token(self, client):
-        """Test de récupération de l'utilisateur sans token"""
+        """Test retrieving the user without a token"""
         response = client.get('/api/auth/me')
         
         assert response.status_code == 401
@@ -116,7 +116,7 @@ class TestAuth:
         assert 'Token is missing' in data['error']
     
     def test_get_current_user_invalid_token(self, client):
-        """Test de récupération de l'utilisateur avec token invalide"""
+        """Test retrieving the user with an invalid token"""
         headers = {'Authorization': 'Bearer invalid_token'}
         response = client.get('/api/auth/me', headers=headers)
         
@@ -125,7 +125,7 @@ class TestAuth:
         assert 'Token is invalid or expired' in data['error']
     
     def test_change_password(self, client, auth_headers):
-        """Test de changement de mot de passe"""
+        """Test changing the password"""
         response = client.post('/api/auth/change-password', 
                               headers=auth_headers,
                               json={
@@ -138,7 +138,7 @@ class TestAuth:
         assert data['message'] == 'Password changed successfully'
     
     def test_change_password_wrong_current(self, client, auth_headers):
-        """Test de changement de mot de passe avec ancien mot de passe incorrect"""
+        """Test changing the password with an incorrect current password"""
         response = client.post('/api/auth/change-password', 
                               headers=auth_headers,
                               json={
@@ -151,7 +151,7 @@ class TestAuth:
         assert 'Current password is incorrect' in data['error']
     
     def test_logout(self, client, auth_headers):
-        """Test de déconnexion"""
+        """Test logout"""
         response = client.post('/api/auth/logout', headers=auth_headers)
         
         assert response.status_code == 200
@@ -159,8 +159,8 @@ class TestAuth:
         assert data['message'] == 'Logout successful'
     
     def test_refresh_token(self, client):
-        """Test de rafraîchissement de token"""
-        # D'abord s'inscrire pour obtenir un refresh token
+        """Test token refresh"""
+        # First register to get a refresh token
         register_response = client.post('/api/auth/register', json={
             'email': 'refresh@example.com',
             'password': 'RefreshPassword123!',
@@ -171,7 +171,7 @@ class TestAuth:
         register_data = register_response.get_json()
         refresh_token = register_data['tokens']['refresh_token']
         
-        # Utiliser le refresh token
+        # Use the refresh token
         response = client.post('/api/auth/refresh', json={
             'refresh_token': refresh_token
         })

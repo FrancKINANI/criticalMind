@@ -1,14 +1,14 @@
 """
-Abstraction du provider LLM interchangeable (cloud / edge).
+Interchangeable LLM provider abstraction (cloud / edge).
 
-Permet de basculer entre un provider cloud compatible avec l'API OpenAI
-(OpenAI, OpenRouter, Mistral, vLLM, ...) et un provider edge local (Ollama)
-sans changer le code appelant, via la table ``settings`` en base de données
-(voir ``GET/PUT /api/admin/llm-settings``) ou via des variables d'environnement.
+Allows switching between a cloud provider compatible with the OpenAI API
+(OpenAI, OpenRouter, Mistral, vLLM, ...) and a local edge provider (Ollama)
+without changing the calling code, via the ``settings`` table in the database
+(see ``GET/PUT /api/admin/llm-settings``) or via environment variables.
 
-Choix documenté (divergence volontaire avec smart_notes) :
-ce repo reste 100% Python/Flask et utilise Ollama en edge plutôt que le SDK
-QVAC (Node) de smart_notes — voir README.md pour la justification.
+Documented choice (intentional divergence from smart_notes):
+this repo remains 100% Python/Flask and uses Ollama for edge rather than the
+QVAC (Node) SDK from smart_notes — see README.md for the justification.
 """
 
 import logging
@@ -19,7 +19,7 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-# Réglages par défaut par provider (repli si rien n'est configuré en DB/env)
+# Default settings per provider (fallback if nothing is configured in DB/env)
 PROVIDER_DEFAULTS = {
     'openai': {
         'base_url': 'https://api.openai.com/v1',
@@ -35,11 +35,11 @@ DEFAULT_PROVIDER = os.environ.get('LLM_PROVIDER', 'openai').lower()
 
 
 class LLMProviderError(Exception):
-    """Erreur d'appel au provider LLM (réseau, API, clé manquante...)."""
+    """Error calling the LLM provider (network, API, missing key...)."""
 
 
 class LLMProvider(ABC):
-    """Interface commune des providers LLM (cloud ou edge)."""
+    """Common interface for LLM providers (cloud or edge)."""
 
     name = 'base'
 
@@ -50,12 +50,12 @@ class LLMProvider(ABC):
 
     @property
     def is_edge(self):
-        """True si le provider est un modèle local (qualité non garantie)."""
+        """True if the provider is a local model (quality not guaranteed)."""
         return False
 
     @abstractmethod
     def generate(self, prompt, system=None, temperature=0.7, max_tokens=300):
-        """Génère une réponse texte pour le prompt donné."""
+        """Generates a text response for the given prompt."""
         raise NotImplementedError
 
     def __repr__(self):
@@ -63,14 +63,14 @@ class LLMProvider(ABC):
 
 
 class OpenAICompatibleProvider(LLMProvider):
-    """Provider compatible API OpenAI (``/chat/completions``).
+    """OpenAI API-compatible provider (``/chat/completions``).
 
-    Généralise l'ancien appel ``openai.OpenAI()`` en dur (learning.py) à une
-    ``base_url`` configurable : OpenAI, OpenRouter, Mistral, vLLM, etc.
-    Implémenté avec ``requests`` (déjà dans requirements.txt) plutôt que le
-    SDK ``openai`` (non déclaré ni installé) — ce qui corrige au passage le
-    ``ModuleNotFoundError: No module named 'openai'`` qui empêchait l'app de
-    démarrer.
+    Generalizes the old hardcoded ``openai.OpenAI()`` call (learning.py) to a
+    configurable ``base_url``: OpenAI, OpenRouter, Mistral, vLLM, etc.
+    Implemented with ``requests`` (already in requirements.txt) rather than the
+    ``openai`` SDK (not declared nor installed) — which also fixes the
+    ``ModuleNotFoundError: No module named 'openai'`` that prevented the app from
+    starting.
     """
 
     name = 'openai'
@@ -78,7 +78,7 @@ class OpenAICompatibleProvider(LLMProvider):
     def generate(self, prompt, system=None, temperature=0.7, max_tokens=300):
         if not self.api_key:
             raise LLMProviderError(
-                'OPENAI_API_KEY manquante pour le provider OpenAI-compatible'
+                'OPENAI_API_KEY missing for the OpenAI-compatible provider'
             )
 
         messages = []
@@ -106,18 +106,18 @@ class OpenAICompatibleProvider(LLMProvider):
             data = response.json()
             return data['choices'][0]['message']['content']
         except requests.RequestException as exc:
-            logger.error('Appel OpenAI-compatible échoué (%s): %s', url, exc)
+            logger.error('OpenAI-compatible call failed (%s): %s', url, exc)
             raise LLMProviderError(str(exc)) from exc
         except (KeyError, IndexError, ValueError) as exc:
-            logger.error('Réponse OpenAI-compatible inattendue (%s): %s', url, exc)
+            logger.error('Unexpected OpenAI-compatible response (%s): %s', url, exc)
             raise LLMProviderError(str(exc)) from exc
 
 
 class OllamaProvider(LLMProvider):
-    """Provider edge local via l'API HTTP d'Ollama (défaut : http://localhost:11434).
+    """Local edge provider via Ollama's HTTP API (default: http://localhost:11434).
 
-    Utilise l'endpoint compatible OpenAI ``/v1/chat/completions`` exposé par
-    Ollama pour conserver exactement le même format de requête que le cloud.
+    Uses the OpenAI-compatible ``/v1/chat/completions`` endpoint exposed by
+    Ollama to maintain exactly the same request format as the cloud provider.
     """
 
     name = 'ollama'
@@ -150,16 +150,16 @@ class OllamaProvider(LLMProvider):
             return data['choices'][0]['message']['content']
         except requests.RequestException as exc:
             logger.error(
-                'Appel Ollama échoué (Ollama est-il lancé sur %s ?): %s', url, exc
+                'Ollama call failed (is Ollama running on %s?): %s', url, exc
             )
             raise LLMProviderError(str(exc)) from exc
         except (KeyError, IndexError, ValueError) as exc:
-            logger.error('Réponse Ollama inattendue (%s): %s', url, exc)
+            logger.error('Unexpected Ollama response (%s): %s', url, exc)
             raise LLMProviderError(str(exc)) from exc
 
 
 def get_default_settings():
-    """Réglages par défaut du provider actif (env > constantes)."""
+    """Default settings of the active provider (env > constants)."""
     provider = DEFAULT_PROVIDER
     defaults = PROVIDER_DEFAULTS.get(provider, PROVIDER_DEFAULTS['openai'])
     base_url = os.environ.get(
@@ -176,7 +176,7 @@ def get_default_settings():
 
 
 def get_llm_settings():
-    """Réglages LLM depuis la table ``settings`` (repli env/constantes)."""
+    """LLM settings from the ``settings`` table (env/constants fallback)."""
     try:
         from src.models.setting import Setting
 
@@ -195,15 +195,15 @@ def get_llm_settings():
                 'base_url': setting.base_url or env_base_url,
                 'model_name': setting.model_name or env_model,
             }
-    except Exception as exc:  # table absente, hors contexte d'app, etc.
+    except Exception as exc:  # missing table, outside app context, etc.
         logger.warning(
-            'Réglages LLM indisponibles en DB (%s), utilisation des défauts env.', exc
+            'LLM settings unavailable in DB (%s), using env defaults.', exc
         )
     return get_default_settings()
 
 
 def get_llm_provider():
-    """Factory : renvoie le provider LLM configuré (cloud ou edge)."""
+    """Factory: returns the configured LLM provider (cloud or edge)."""
     settings = get_llm_settings()
     provider = settings['provider'].lower()
 
@@ -215,8 +215,8 @@ def get_llm_provider():
             settings['model_name'],
             api_key=os.environ.get('OPENAI_API_KEY'),
         )
-    # Provider inconnu : repli sur OpenAI-compatible par défaut
-    logger.warning('Provider LLM inconnu "%s", repli sur OpenAI-compatible.', provider)
+    # Unknown provider: fall back to the default OpenAI-compatible provider
+    logger.warning('Unknown LLM provider "%s", falling back to OpenAI-compatible.', provider)
     return OpenAICompatibleProvider(
         settings['base_url'],
         settings['model_name'],

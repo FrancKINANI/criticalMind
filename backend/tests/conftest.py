@@ -8,13 +8,13 @@ from src.models.organization import Organization
 
 @pytest.fixture
 def client():
-    """Client de test Flask — base SQLite en mémoire isolée par test.
+    """Flask test client — in-memory SQLite database isolated per test.
 
-    Chaque test crée sa propre application via la factory (TestingConfig :
-    ``sqlite:///:memory:``, TESTING=True, WTF_CSRF_ENABLED=False), donc son
-    propre engine et sa propre base en mémoire. Aucun état partagé entre les
-    tests (le module-level ``app = create_app()`` de main.py, qui lie l'engine
-    à la base de développement, n'est jamais utilisé par les tests).
+    Each test creates its own application via the factory (TestingConfig:
+    ``sqlite:///:memory:``, TESTING=True, WTF_CSRF_ENABLED=False), therefore
+    its own engine and in-memory database. No state is shared between tests
+    (the module-level ``app = create_app()`` of main.py, which binds the engine
+    to the development database, is never used by the tests).
     """
     application = create_app('testing')
     with application.test_client() as client:
@@ -25,13 +25,13 @@ def client():
 
 @pytest.fixture
 def auth_headers(client):
-    """Créer un utilisateur de test et retourner les headers d'authentification"""
-    # Créer une organisation
+    """Create a test user and return the authentication headers"""
+    # Create an organization
     org = Organization(name="Test Organization")
     db.session.add(org)
     db.session.flush()
 
-    # Créer un utilisateur admin
+    # Create an admin user
     user = User(
         email="test@example.com",
         first_name="Test",
@@ -43,7 +43,7 @@ def auth_headers(client):
     db.session.add(user)
     db.session.commit()
 
-    # Se connecter
+    # Log in
     response = client.post('/api/auth/login', json={
         'email': 'test@example.com',
         'password': 'TestPassword123!'
@@ -57,13 +57,13 @@ def auth_headers(client):
 
 @pytest.fixture
 def student_headers(client):
-    """Créer un utilisateur étudiant de test"""
-    # Créer une organisation
+    """Create a test student user"""
+    # Create an organization
     org = Organization(name="Student Test Organization")
     db.session.add(org)
     db.session.flush()
 
-    # Créer un utilisateur étudiant
+    # Create a student user
     user = User(
         email="student@example.com",
         first_name="Student",
@@ -75,7 +75,7 @@ def student_headers(client):
     db.session.add(user)
     db.session.commit()
 
-    # Se connecter
+    # Log in
     response = client.post('/api/auth/login', json={
         'email': 'student@example.com',
         'password': 'StudentPassword123!'

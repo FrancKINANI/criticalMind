@@ -9,7 +9,7 @@ notifications_bp = Blueprint('notifications', __name__)
 @notifications_bp.route('/', methods=['GET'])
 @token_required
 def get_notifications():
-    """Obtenir les notifications de l'utilisateur"""
+    """Get the user's notifications"""
     page = request.args.get('page', 1)
     per_page = request.args.get('per_page', 20)
     unread_only = request.args.get('unread_only', 'false').lower() == 'true'
@@ -44,7 +44,7 @@ def get_notifications():
 @notifications_bp.route('/unread-count', methods=['GET'])
 @token_required
 def get_unread_count():
-    """Obtenir le nombre de notifications non lues"""
+    """Get the number of unread notifications"""
     count = Notification.get_unread_count(g.current_user.id)
     
     return jsonify({
@@ -54,7 +54,7 @@ def get_unread_count():
 @notifications_bp.route('/<notification_id>/mark-read', methods=['POST'])
 @token_required
 def mark_notification_read(notification_id):
-    """Marquer une notification comme lue"""
+    """Mark a notification as read"""
     notification = Notification.query.filter_by(
         id=notification_id,
         user_id=g.current_user.id
@@ -72,7 +72,7 @@ def mark_notification_read(notification_id):
 @notifications_bp.route('/mark-all-read', methods=['POST'])
 @token_required
 def mark_all_notifications_read():
-    """Marquer toutes les notifications comme lues"""
+    """Mark all notifications as read"""
     Notification.query.filter_by(
         user_id=g.current_user.id,
         is_read=False
@@ -87,7 +87,7 @@ def mark_all_notifications_read():
 @notifications_bp.route('/<notification_id>', methods=['DELETE'])
 @token_required
 def delete_notification(notification_id):
-    """Supprimer une notification"""
+    """Delete a notification"""
     notification = Notification.query.filter_by(
         id=notification_id,
         user_id=g.current_user.id

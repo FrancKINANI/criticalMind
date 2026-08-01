@@ -4,11 +4,11 @@ from src.models import db
 
 
 class Setting(db.Model):
-    """Réglages globaux de l'application (ligne unique).
+    """Global application settings (single row).
 
-    Utilisé pour piloter la bascule du provider LLM (cloud/edge) :
-    ``provider`` (openai | ollama), ``base_url`` et ``model_name``.
-    Pilotable via ``GET/PUT /api/admin/llm-settings`` (rôle admin).
+    Used to drive the LLM provider switch (cloud/edge):
+    ``provider`` (openai | ollama), ``base_url`` and ``model_name``.
+    Manageable via ``GET/PUT /api/admin/llm-settings`` (admin role).
     """
 
     __tablename__ = 'settings'

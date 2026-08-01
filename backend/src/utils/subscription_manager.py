@@ -5,11 +5,11 @@ from src.models.organization import Organization
 from src.models.user import User
 
 class SubscriptionManager:
-    """Gestionnaire des abonnements et des limites"""
+    """Manager for subscriptions and limits"""
     
     @staticmethod
     def check_subscription_limits(organization_id: str, feature: str) -> dict:
-        """Vérifier les limites d'abonnement pour une fonctionnalité"""
+        """Check the subscription limits for a feature"""
         organization = Organization.query.get(organization_id)
         if not organization:
             return {'allowed': False, 'reason': 'Organization not found'}
@@ -20,19 +20,19 @@ class SubscriptionManager:
         ).first()
         
         if not subscription:
-            # Utiliser les limites du plan gratuit
+            # Use the free plan limits
             return SubscriptionManager._check_free_plan_limits(organization_id, feature)
         
         plan = subscription.plan
         if not plan:
             return {'allowed': False, 'reason': 'Subscription plan not found'}
         
-        # Vérifier les limites selon le plan
+        # Check the limits according to the plan
         return SubscriptionManager._check_plan_limits(organization_id, plan, feature)
     
     @staticmethod
     def _check_free_plan_limits(organization_id: str, feature: str) -> dict:
-        """Vérifier les limites du plan gratuit"""
+        """Check the free plan limits"""
         limits = {
             'max_users': 5,
             'max_modules': 3,
@@ -69,7 +69,7 @@ class SubscriptionManager:
             }
         
         elif feature == 'ai_requests':
-            # Compter les requêtes IA du mois en cours
+            # Count the AI requests of the current month
             from src.models.analytics import AnalyticsEvent
             start_of_month = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             
@@ -96,7 +96,7 @@ class SubscriptionManager:
     
     @staticmethod
     def _check_plan_limits(organization_id: str, plan: SubscriptionPlan, feature: str) -> dict:
-        """Vérifier les limites d'un plan payant"""
+        """Check the limits of a paid plan"""
         features = plan.features or {}
         
         if feature == 'users':
@@ -168,7 +168,7 @@ class SubscriptionManager:
     
     @staticmethod
     def get_subscription_status(organization_id: str) -> dict:
-        """Obtenir le statut complet de l'abonnement"""
+        """Get the complete subscription status"""
         organization = Organization.query.get(organization_id)
         if not organization:
             return {'error': 'Organization not found'}
@@ -195,7 +195,7 @@ class SubscriptionManager:
         plan = subscription.plan
         now = datetime.utcnow()
         
-        # Vérifier si c'est une période d'essai
+        # Check if it is a trial period
         is_trial = (
             subscription.status in ['trialing', 'active'] and
             subscription.current_period_end and
@@ -220,7 +220,7 @@ class SubscriptionManager:
     
     @staticmethod
     def track_usage(organization_id: str, feature: str, amount: int = 1):
-        """Suivre l'utilisation d'une fonctionnalité"""
+        """Track the usage of a feature"""
         from src.models.analytics import AnalyticsEvent
         
         AnalyticsEvent.track_event(
@@ -231,33 +231,33 @@ class SubscriptionManager:
     
     @staticmethod
     def get_usage_stats(organization_id: str, period_days: int = 30) -> dict:
-        """Obtenir les statistiques d'utilisation"""
+        """Get the usage statistics"""
         from src.models.analytics import AnalyticsEvent
         from src.models.learning import LearningModule
         from src.models.user import User
         
         start_date = datetime.utcnow() - timedelta(days=period_days)
         
-        # Utilisateurs actifs
+        # Active users
         active_users = User.query.filter_by(
             organization_id=organization_id,
             is_active=True
         ).count()
         
-        # Modules créés
+        # Created modules
         modules_count = LearningModule.query.filter_by(
             organization_id=organization_id,
             is_active=True
         ).count()
         
-        # Requêtes IA
+        # AI requests
         ai_requests = AnalyticsEvent.query.filter(
             AnalyticsEvent.organization_id == organization_id,
             AnalyticsEvent.event_type == 'ai_request',
             AnalyticsEvent.created_at >= start_date
         ).count()
         
-        # Connexions
+        # Logins
         logins = AnalyticsEvent.query.filter(
             AnalyticsEvent.organization_id == organization_id,
             AnalyticsEvent.event_type == 'user_login',
@@ -275,7 +275,7 @@ class SubscriptionManager:
         }
 
 def require_subscription_limit(feature: str):
-    """Décorateur pour vérifier les limites d'abonnement"""
+    """Decorator to check the subscription limits"""
     def decorator(f):
         from functools import wraps
         from flask import g, jsonify

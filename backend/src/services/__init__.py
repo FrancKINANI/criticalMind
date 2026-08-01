@@ -1,1 +1,1 @@
-"""Services métier de CriticalMind (providers LLM, etc.)."""
+"""CriticalMind business services (LLM providers, etc.)."""

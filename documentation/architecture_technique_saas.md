@@ -1,56 +1,56 @@
-# Architecture Technique et Schéma de Base de Données pour CriticalMind SaaS
+# Technical Architecture and Database Schema for CriticalMind SaaS
 
 ## Introduction
 
-Ce document présente l'architecture technique complète pour transformer CriticalMind en une solution SaaS robuste et scalable. L'architecture proposée suit les meilleures pratiques de l'industrie pour assurer la sécurité, la performance et la scalabilité nécessaires pour un SaaS d'un million de dollars.
+This document presents the complete technical architecture for transforming CriticalMind into a robust and scalable SaaS solution. The proposed architecture follows industry best practices to ensure the security, performance, and scalability required for a million-dollar SaaS.
 
-## 1. Vue d'ensemble de l'Architecture
+## 1. Architecture Overview
 
-### Architecture Microservices
+### Microservices Architecture
 
-L'application CriticalMind SaaS sera construite selon une architecture microservices modulaire, permettant une scalabilité horizontale et une maintenance simplifiée. Cette approche offre plusieurs avantages :
+The CriticalMind SaaS application will be built on a modular microservices architecture, enabling horizontal scalability and simplified maintenance. This approach offers several advantages:
 
-- **Isolation des services** : Chaque service peut être développé, déployé et mis à l'échelle indépendamment
-- **Résilience** : La défaillance d'un service n'affecte pas l'ensemble du système
-- **Technologie diverse** : Possibilité d'utiliser différentes technologies selon les besoins spécifiques de chaque service
-- **Équipes autonomes** : Les équipes peuvent travailler sur différents services en parallèle
+- **Service isolation**: Each service can be developed, deployed, and scaled independently
+- **Resilience**: A service failure does not affect the whole system
+- **Technology diversity**: Different technologies can be used based on the specific needs of each service
+- **Autonomous teams**: Teams can work on different services in parallel
 
-### Services Principaux
+### Main Services
 
-L'architecture comprendra les services suivants :
+The architecture will include the following services:
 
-1. **Service d'Authentification** : Gestion des utilisateurs, authentification et autorisation
-2. **Service de Gestion des Contenus** : Modules d'apprentissage, exercices et ressources pédagogiques
-3. **Service de Gamification** : Badges, points, classements et système de récompenses
-4. **Service de Paiement** : Gestion des abonnements, factures et transactions
-5. **Service d'Analyse** : Suivi des performances, analytics et reporting
-6. **Service de Communication** : Forum, notifications et messagerie
-7. **Service d'Administration** : Panneau d'administration et gestion des locataires
-8. **Service d'IA** : Intégration avec Mistral AI pour l'assistance intelligente
+1. **Authentication Service**: User management, authentication, and authorization
+2. **Content Management Service**: Learning modules, exercises, and educational resources
+3. **Gamification Service**: Badges, points, leaderboards, and reward system
+4. **Payment Service**: Subscription, invoice, and transaction management
+5. **Analytics Service**: Performance tracking, analytics, and reporting
+6. **Communication Service**: Forum, notifications, and messaging
+7. **Administration Service**: Admin panel and tenant management
+8. **AI Service**: Integration with Mistral AI for intelligent assistance
 
-### Technologies Clés
+### Key Technologies
 
-- **Backend** : Flask (Python) pour les API REST
-- **Base de données** : PostgreSQL pour les données relationnelles, Redis pour le cache
-- **Authentification** : JWT avec refresh tokens, OAuth 2.0 pour SSO
-- **Paiements** : Stripe pour le traitement des paiements
-- **Cache** : Redis pour les sessions et données fréquemment consultées
-- **Message Queue** : Celery avec Redis pour les tâches asynchrones
-- **Monitoring** : Prometheus et Grafana pour la surveillance
-- **Déploiement** : Docker containers avec orchestration
+- **Backend**: Flask (Python) for REST APIs
+- **Database**: PostgreSQL for relational data, Redis for cache
+- **Authentication**: JWT with refresh tokens, OAuth 2.0 for SSO
+- **Payments**: Stripe for payment processing
+- **Cache**: Redis for sessions and frequently accessed data
+- **Message Queue**: Celery with Redis for asynchronous tasks
+- **Monitoring**: Prometheus and Grafana for observability
+- **Deployment**: Docker containers with orchestration
 
-## 2. Schéma de Base de Données
+## 2. Database Schema
 
-### Modèle de Données Multi-tenant
+### Multi-tenant Data Model
 
-L'architecture de base de données suit un modèle multi-tenant avec isolation par tenant_id, permettant de servir plusieurs organisations tout en maintenant la séparation des données.
+The database architecture follows a multi-tenant model with tenant_id isolation, allowing multiple organizations to be served while maintaining data separation.
 
-### Tables Principales
+### Main Tables
 
-#### Gestion des Utilisateurs et Authentification
+#### User Management and Authentication
 
 ```sql
--- Table des organisations (tenants)
+-- Organizations (tenants) table
 CREATE TABLE organizations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
@@ -61,7 +61,7 @@ CREATE TABLE organizations (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des utilisateurs
+-- Users table
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID REFERENCES organizations(id),
@@ -77,7 +77,7 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des sessions utilisateur
+-- User sessions table
 CREATE TABLE user_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -87,7 +87,7 @@ CREATE TABLE user_sessions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des rôles et permissions
+-- Roles and permissions table
 CREATE TABLE roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID REFERENCES organizations(id),
@@ -97,10 +97,10 @@ CREATE TABLE roles (
 );
 ```
 
-#### Gestion des Contenus et Apprentissage
+#### Content Management and Learning
 
 ```sql
--- Table des modules d'apprentissage
+-- Learning modules table
 CREATE TABLE learning_modules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID REFERENCES organizations(id),
@@ -108,7 +108,7 @@ CREATE TABLE learning_modules (
     description TEXT,
     content JSONB NOT NULL,
     difficulty_level INTEGER DEFAULT 1,
-    estimated_duration INTEGER, -- en minutes
+    estimated_duration INTEGER, -- in minutes
     is_premium BOOLEAN DEFAULT false,
     is_active BOOLEAN DEFAULT true,
     created_by UUID REFERENCES users(id),
@@ -116,34 +116,34 @@ CREATE TABLE learning_modules (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des exercices
+-- Exercises table
 CREATE TABLE exercises (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     module_id UUID REFERENCES learning_modules(id),
     title VARCHAR(255) NOT NULL,
     question TEXT NOT NULL,
     exercise_type VARCHAR(50) NOT NULL, -- 'multiple_choice', 'essay', 'scenario'
-    options JSONB, -- pour les questions à choix multiples
+    options JSONB, -- for multiple choice questions
     correct_answer JSONB,
     explanation TEXT,
     points INTEGER DEFAULT 10,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des progrès utilisateur
+-- User progress table
 CREATE TABLE user_progress (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id),
     module_id UUID REFERENCES learning_modules(id),
     completion_percentage DECIMAL(5,2) DEFAULT 0,
     score INTEGER DEFAULT 0,
-    time_spent INTEGER DEFAULT 0, -- en minutes
+    time_spent INTEGER DEFAULT 0, -- in minutes
     started_at TIMESTAMP,
     completed_at TIMESTAMP,
     last_accessed TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des réponses utilisateur
+-- User responses table
 CREATE TABLE user_responses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id),
@@ -156,23 +156,23 @@ CREATE TABLE user_responses (
 );
 ```
 
-#### Système de Gamification
+#### Gamification System
 
 ```sql
--- Table des badges
+-- Badges table
 CREATE TABLE badges (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID REFERENCES organizations(id),
     name VARCHAR(100) NOT NULL,
     description TEXT,
     icon_url VARCHAR(255),
-    criteria JSONB NOT NULL, -- conditions pour obtenir le badge
+    criteria JSONB NOT NULL, -- conditions to earn the badge
     points_value INTEGER DEFAULT 0,
     rarity VARCHAR(20) DEFAULT 'common', -- 'common', 'rare', 'epic', 'legendary'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des badges utilisateur
+-- User badges table
 CREATE TABLE user_badges (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id),
@@ -181,7 +181,7 @@ CREATE TABLE user_badges (
     UNIQUE(user_id, badge_id)
 );
 
--- Table des points utilisateur
+-- User points table
 CREATE TABLE user_points (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id),
@@ -191,7 +191,7 @@ CREATE TABLE user_points (
     earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des classements
+-- Leaderboards table
 CREATE TABLE leaderboards (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID REFERENCES organizations(id),
@@ -204,10 +204,10 @@ CREATE TABLE leaderboards (
 );
 ```
 
-#### Gestion des Paiements et Abonnements
+#### Payments and Subscriptions Management
 
 ```sql
--- Table des plans d'abonnement
+-- Subscription plans table
 CREATE TABLE subscription_plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
@@ -222,7 +222,7 @@ CREATE TABLE subscription_plans (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des abonnements
+-- Subscriptions table
 CREATE TABLE subscriptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID REFERENCES organizations(id),
@@ -236,7 +236,7 @@ CREATE TABLE subscriptions (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des factures
+-- Invoices table
 CREATE TABLE invoices (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID REFERENCES organizations(id),
@@ -251,7 +251,7 @@ CREATE TABLE invoices (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des méthodes de paiement
+-- Payment methods table
 CREATE TABLE payment_methods (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID REFERENCES organizations(id),
@@ -264,21 +264,21 @@ CREATE TABLE payment_methods (
 );
 ```
 
-#### Communication et Forum
+#### Communication and Forum
 
 ```sql
--- Table des catégories de forum
+-- Forum categories table
 CREATE TABLE forum_categories (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID REFERENCES organizations(id),
     name VARCHAR(100) NOT NULL,
     description TEXT,
-    color VARCHAR(7), -- code couleur hex
+    color VARCHAR(7), -- hex color code
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des discussions
+-- Discussions table
 CREATE TABLE forum_topics (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     category_id UUID REFERENCES forum_categories(id),
@@ -294,7 +294,7 @@ CREATE TABLE forum_topics (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des réponses
+-- Replies table
 CREATE TABLE forum_replies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     topic_id UUID REFERENCES forum_topics(id),
@@ -306,7 +306,7 @@ CREATE TABLE forum_replies (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des notifications
+-- Notifications table
 CREATE TABLE notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id),
@@ -319,10 +319,10 @@ CREATE TABLE notifications (
 );
 ```
 
-#### Analytics et Reporting
+#### Analytics and Reporting
 
 ```sql
--- Table des événements d'analyse
+-- Analytics events table
 CREATE TABLE analytics_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID REFERENCES organizations(id),
@@ -335,7 +335,7 @@ CREATE TABLE analytics_events (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des métriques agrégées
+-- Aggregated metrics table
 CREATE TABLE analytics_metrics (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID REFERENCES organizations(id),
@@ -348,10 +348,10 @@ CREATE TABLE analytics_metrics (
 );
 ```
 
-### Index et Optimisations
+### Indexes and Optimizations
 
 ```sql
--- Index pour les requêtes fréquentes
+-- Indexes for frequent queries
 CREATE INDEX idx_users_organization_id ON users(organization_id);
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_user_progress_user_id ON user_progress(user_id);
@@ -361,16 +361,16 @@ CREATE INDEX idx_forum_replies_topic_id ON forum_replies(topic_id);
 CREATE INDEX idx_notifications_user_id_unread ON notifications(user_id) WHERE is_read = false;
 CREATE INDEX idx_analytics_events_organization_created ON analytics_events(organization_id, created_at);
 
--- Index composites pour les requêtes complexes
+-- Composite indexes for complex queries
 CREATE INDEX idx_user_badges_user_earned ON user_badges(user_id, earned_at DESC);
 CREATE INDEX idx_subscriptions_org_status ON subscriptions(organization_id, status);
 ```
 
-## 3. Architecture des API
+## 3. API Architecture
 
-### Structure des API REST
+### REST API Structure
 
-Les API suivront les principes REST avec une structure cohérente :
+The APIs will follow REST principles with a consistent structure:
 
 ```
 /api/v1/
@@ -410,34 +410,34 @@ Les API suivront les principes REST avec une structure cohérente :
     └── analytics
 ```
 
-### Authentification et Autorisation
+### Authentication and Authorization
 
-L'authentification utilisera JWT (JSON Web Tokens) avec les caractéristiques suivantes :
+Authentication will use JWT (JSON Web Tokens) with the following characteristics:
 
-- **Access tokens** : Durée de vie courte (15 minutes)
-- **Refresh tokens** : Durée de vie longue (30 jours)
-- **Rotation des tokens** : Nouveau refresh token à chaque renouvellement
-- **Révocation** : Possibilité de révoquer les tokens en cas de compromission
+- **Access tokens**: Short lifespan (15 minutes)
+- **Refresh tokens**: Long lifespan (30 days)
+- **Token rotation**: New refresh token on every renewal
+- **Revocation**: Tokens can be revoked in case of compromise
 
-### Middleware de Sécurité
+### Security Middleware
 
-Chaque requête API passera par plusieurs couches de middleware :
+Each API request will go through several middleware layers:
 
-1. **CORS** : Configuration pour permettre les requêtes cross-origin
-2. **Rate Limiting** : Limitation du nombre de requêtes par utilisateur/IP
-3. **Authentification** : Vérification des tokens JWT
-4. **Autorisation** : Vérification des permissions basées sur les rôles
-5. **Validation** : Validation des données d'entrée
-6. **Logging** : Enregistrement des requêtes pour audit et debugging
+1. **CORS**: Configuration to allow cross-origin requests
+2. **Rate Limiting**: Limiting the number of requests per user/IP
+3. **Authentication**: JWT token verification
+4. **Authorization**: Role-based permission checks
+5. **Validation**: Input data validation
+6. **Logging**: Request logging for audit and debugging
 
-## 4. Architecture de Déploiement
+## 4. Deployment Architecture
 
-### Containerisation avec Docker
+### Containerization with Docker
 
-Chaque service sera containerisé avec Docker pour assurer la portabilité et la cohérence entre les environnements :
+Each service will be containerized with Docker to ensure portability and consistency across environments:
 
 ```dockerfile
-# Exemple de Dockerfile pour un service Flask
+# Example Dockerfile for a Flask service
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -452,23 +452,22 @@ EXPOSE 5000
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "app:app"]
 ```
 
-### Orchestration et Scalabilité
+### Orchestration and Scalability
 
-L'orchestration des containers permettra :
+Container orchestration will enable:
 
-- **Auto-scaling** : Ajustement automatique du nombre d'instances selon la charge
-- **Load balancing** : Distribution du trafic entre les instances
-- **Health checks** : Surveillance de la santé des services
-- **Rolling updates** : Déploiements sans interruption de service
+- **Auto-scaling**: Automatic adjustment of instance count based on load
+- **Load balancing**: Traffic distribution across instances
+- **Health checks**: Service health monitoring
+- **Rolling updates**: Deployments without service interruption
 
-### Monitoring et Observabilité
+### Monitoring and Observability
 
-Le système de monitoring comprendra :
+The monitoring system will include:
 
-- **Métriques applicatives** : Performance, erreurs, utilisation des ressources
-- **Logs centralisés** : Agrégation des logs de tous les services
-- **Traces distribuées** : Suivi des requêtes à travers les microservices
-- **Alertes** : Notifications en cas de problèmes critiques
+- **Application metrics**: Performance, errors, resource usage
+- **Centralized logs**: Log aggregation from all services
+- **Distributed traces**: Request tracking across microservices
+- **Alerts**: Notifications in case of critical issues
 
-Cette architecture technique fournit une base solide pour développer CriticalMind en tant que SaaS scalable et sécurisé, capable de gérer des milliers d'utilisateurs simultanés tout en maintenant des performances optimales et une expérience utilisateur exceptionnelle.
-
+This technical architecture provides a solid foundation for developing CriticalMind as a scalable and secure SaaS, capable of handling thousands of concurrent users while maintaining optimal performance and an exceptional user experience.

@@ -19,7 +19,7 @@ learning_bp = Blueprint('learning', __name__)
 @token_required
 @organization_required
 def get_learning_modules():
-    """Obtenir les modules d'apprentissage disponibles"""
+    """Get the available learning modules"""
     page = request.args.get('page', 1)
     per_page = request.args.get('per_page', 20)
     difficulty = request.args.get('difficulty')
@@ -27,7 +27,7 @@ def get_learning_modules():
     
     page, per_page = validate_pagination_params(page, per_page)
     
-    # Vérifier les limites d'abonnement pour le contenu premium
+    # Check the subscription limits for premium content
     if premium_only:
         limit_check = SubscriptionManager.check_subscription_limits(
             g.current_user.organization_id, 'premium_content'
@@ -38,11 +38,11 @@ def get_learning_modules():
                 'upgrade_required': True
             }), 402
     
-    # Construire la requête
+    # Build the query
     query = LearningModule.query.filter(
         db.or_(
             LearningModule.organization_id == g.current_user.organization_id,
-            LearningModule.organization_id.is_(None)  # Modules publics
+            LearningModule.organization_id.is_(None)  # Public modules
         ),
         LearningModule.is_active == True
     )
@@ -53,7 +53,7 @@ def get_learning_modules():
     if premium_only:
         query = query.filter(LearningModule.is_premium == True)
     
-    # Paginer les résultats
+    # Paginate the results
     pagination = query.paginate(
         page=page,
         per_page=per_page,
@@ -64,7 +64,7 @@ def get_learning_modules():
     for module in pagination.items:
         module_data = module.to_dict()
         
-        # Ajouter la progression de l'utilisateur
+        # Add the user's progress
         progress = UserProgress.query.filter_by(
             user_id=g.current_user.id,
             module_id=module.id
@@ -96,7 +96,7 @@ def get_learning_modules():
 @require_subscription_limit('modules')
 @validate_json('title', 'content')
 def create_learning_module():
-    """Créer un nouveau module d'apprentissage"""
+    """Create a new learning module"""
     data = request.get_json()
     
     module = LearningModule(
@@ -113,7 +113,7 @@ def create_learning_module():
     db.session.add(module)
     db.session.commit()
     
-    # Suivre l'utilisation
+    # Track the usage
     SubscriptionManager.track_usage(g.current_user.organization_id, 'modules')
     
     return jsonify({
@@ -125,7 +125,7 @@ def create_learning_module():
 @token_required
 @organization_required
 def get_learning_module(module_id):
-    """Obtenir les détails d'un module d'apprentissage"""
+    """Get the details of a learning module"""
     module = LearningModule.query.filter(
         LearningModule.id == module_id,
         db.or_(
@@ -138,7 +138,7 @@ def get_learning_module(module_id):
     if not module:
         return jsonify({'error': 'Module not found'}), 404
     
-    # Vérifier l'accès au contenu premium
+    # Check access to the premium content
     if module.is_premium:
         limit_check = SubscriptionManager.check_subscription_limits(
             g.current_user.organization_id, 'premium_content'
@@ -151,11 +151,11 @@ def get_learning_module(module_id):
     
     module_data = module.to_dict()
     
-    # Ajouter les exercices
+    # Add the exercises
     exercises = [exercise.to_dict() for exercise in module.exercises]
     module_data['exercises'] = exercises
     
-    # Ajouter la progression de l'utilisateur
+    # Add the user's progress
     progress = UserProgress.query.filter_by(
         user_id=g.current_user.id,
         module_id=module.id
@@ -164,7 +164,7 @@ def get_learning_module(module_id):
     if progress:
         module_data['user_progress'] = progress.to_dict()
     else:
-        # Créer une nouvelle progression
+        # Create new progress
         progress = UserProgress(
             user_id=g.current_user.id,
             module_id=module.id,
@@ -174,7 +174,7 @@ def get_learning_module(module_id):
         db.session.commit()
         module_data['user_progress'] = progress.to_dict()
     
-    # Mettre à jour le dernier accès
+    # Update the last access
     progress.last_accessed = datetime.utcnow()
     db.session.commit()
     
@@ -186,7 +186,7 @@ def get_learning_module(module_id):
 @role_required('admin', 'teacher')
 @validate_json('title', 'question', 'exercise_type')
 def create_exercise(module_id):
-    """Créer un nouvel exercice pour un module"""
+    """Create a new exercise for a module"""
     data = request.get_json()
     
     module = LearningModule.query.filter_by(
@@ -221,19 +221,19 @@ def create_exercise(module_id):
 @organization_required
 @validate_json('response')
 def submit_exercise_response(exercise_id):
-    """Soumettre une réponse à un exercice"""
+    """Submit a response to an exercise"""
     data = request.get_json()
     
     exercise = Exercise.query.get(exercise_id)
     if not exercise:
         return jsonify({'error': 'Exercise not found'}), 404
     
-    # Vérifier l'accès au module
+    # Check access to the module
     module = exercise.module
     if module.organization_id and module.organization_id != g.current_user.organization_id:
         return jsonify({'error': 'Access denied'}), 403
     
-    # Vérifier si l'utilisateur a déjà répondu
+    # Check if the user has already responded
     existing_response = UserResponse.query.filter_by(
         user_id=g.current_user.id,
         exercise_id=exercise_id
@@ -242,25 +242,26 @@ def submit_exercise_response(exercise_id):
     if existing_response:
         return jsonify({'error': 'Response already submitted'}), 409
     
-    # Évaluer la réponse
+    # Evaluate the response
     is_correct = False
     points_earned = 0
-    provider_warning = False  # True quand le provider actif est un modèle local/edge
+    ai_feedback = None
+    provider_warning = False  # True when the active provider is a local/edge model
     
     if exercise.exercise_type == 'multiple_choice':
         is_correct = data['response'] == exercise.correct_answer
         points_earned = exercise.points if is_correct else 0
     elif exercise.exercise_type == 'essay':
-        # Pour les essais, utiliser l'IA pour l'évaluation
+        # For essays, use AI for evaluation
         ai_feedback, points_earned, provider_warning = evaluate_essay_with_ai(
             exercise.question, 
             data['response'], 
             exercise.correct_answer,
             exercise.points
         )
-        is_correct = points_earned >= (exercise.points * 0.7)  # 70% pour être considéré comme correct
+        is_correct = points_earned >= (exercise.points * 0.7)  # 70% to be considered correct
     
-    # Créer la réponse
+    # Create the response
     response = UserResponse(
         user_id=g.current_user.id,
         exercise_id=exercise_id,
@@ -272,24 +273,24 @@ def submit_exercise_response(exercise_id):
     
     db.session.add(response)
     
-    # Ajouter les points à l'utilisateur
+    # Add the points to the user
     if points_earned > 0:
         user_points = UserPoints(
             user_id=g.current_user.id,
             points=points_earned,
             source='exercise_completion',
-            description=f'Exercice: {exercise.title}'
+            description=f'Exercise: {exercise.title}'
         )
         db.session.add(user_points)
     
-    # Mettre à jour la progression du module
+    # Update the module progress
     progress = UserProgress.query.filter_by(
         user_id=g.current_user.id,
         module_id=module.id
     ).first()
     
     if progress:
-        # Recalculer la progression
+        # Recalculate the progress
         total_exercises = len(module.exercises)
         completed_exercises = UserResponse.query.filter_by(
             user_id=g.current_user.id
@@ -301,12 +302,12 @@ def submit_exercise_response(exercise_id):
         if progress.completion_percentage >= 100 and not progress.completed_at:
             progress.completed_at = datetime.utcnow()
             
-            # Vérifier les badges à attribuer
+            # Check the badges to award
             check_and_award_badges(g.current_user.id)
     
     db.session.commit()
     
-    # Suivre l'utilisation
+    # Track the usage
     SubscriptionManager.track_usage(g.current_user.organization_id, 'exercises')
     
     return jsonify({
@@ -322,7 +323,7 @@ def submit_exercise_response(exercise_id):
 @learning_bp.route('/progress', methods=['GET'])
 @token_required
 def get_user_progress():
-    """Obtenir la progression de l'utilisateur"""
+    """Get the user's progress"""
     page = request.args.get('page', 1)
     per_page = request.args.get('per_page', 20)
     
@@ -359,12 +360,12 @@ def get_user_progress():
 @organization_required
 @validate_json('exercise_id', 'user_response')
 def get_ai_hint(exercise_id=None):
-    """Obtenir un indice IA pour un exercice"""
+    """Get an AI hint for an exercise"""
     data = request.get_json()
     exercise_id = data['exercise_id']
     user_response = data['user_response']
     
-    # Vérifier les limites d'abonnement pour les requêtes IA
+    # Check the subscription limits for AI requests
     limit_check = SubscriptionManager.check_subscription_limits(
         g.current_user.organization_id, 'ai_requests'
     )
@@ -379,10 +380,10 @@ def get_ai_hint(exercise_id=None):
     if not exercise:
         return jsonify({'error': 'Exercise not found'}), 404
     
-    # Générer un indice avec l'IA
+    # Generate a hint with AI
     hint = generate_ai_hint(exercise.question, user_response)
     
-    # Suivre l'utilisation
+    # Track the usage
     SubscriptionManager.track_usage(g.current_user.organization_id, 'ai_requests')
     
     return jsonify({
@@ -390,96 +391,96 @@ def get_ai_hint(exercise_id=None):
     }), 200
 
 def evaluate_essay_with_ai(question, user_response, expected_answer, max_points):
-    """Évaluer un essai avec l'IA (cloud ou edge).
+    """Evaluate an essay with AI (cloud or edge).
 
-    Retourne un triplet (ai_feedback, points_earned, provider_warning) :
-    ``provider_warning`` vaut True quand le provider actif est un modèle
-    local/edge (Ollama) — qualité non garantie équivalente au mode cloud tant
-    qu'aucun benchmark n'a validé la parité (fonctionnalité payante Stripe).
+    Returns a triple (ai_feedback, points_earned, provider_warning):
+    ``provider_warning`` is True when the active provider is a local/edge
+    model (Ollama) — quality not guaranteed to be equivalent to cloud mode
+    until a benchmark validates the parity (paid Stripe feature).
     """
     provider = get_llm_provider()
     provider_warning = provider.is_edge
     if provider_warning:
         logger.warning(
-            '[EDGE LLM] evaluate_essay_with_ai utilise un modèle local (%s, %s). '
-            'Qualité non garantie équivalente au mode cloud — correction payante.',
+            '[EDGE LLM] evaluate_essay_with_ai uses a local model (%s, %s). '
+            'Quality not guaranteed to be equivalent to cloud mode — paid grading.',
             provider.name, provider.model_name
         )
 
     try:
         prompt = f"""
-        Évaluez cette réponse d'étudiant sur une échelle de 0 à {max_points} points.
+        Evaluate this student's answer on a scale from 0 to {max_points} points.
         
         Question: {question}
         
-        Réponse attendue/Critères: {expected_answer}
+        Expected answer/Criteria: {expected_answer}
         
-        Réponse de l'étudiant: {user_response}
+        Student's answer: {user_response}
         
-        Fournissez:
-        1. Un score sur {max_points} points
-        2. Des commentaires constructifs en français
-        3. Des suggestions d'amélioration
+        Provide:
+        1. A score out of {max_points} points
+        2. Constructive comments in English
+        3. Suggestions for improvement
         
-        Format de réponse:
+        Response format:
         Score: X/{max_points}
-        Commentaires: [vos commentaires]
+        Comments: [your comments]
         """
         
         ai_feedback = provider.generate(
             prompt,
-            system="Vous êtes un correcteur pédagogique rigoureux et constructif pour la pensée critique.",
+            system="You are a rigorous and constructive pedagogical grader for critical thinking.",
             temperature=0.3,
             max_tokens=300
         )
         
-        # Extraire le score
+        # Extract the score
         score_line = [line for line in ai_feedback.split('\n') if line.startswith('Score:')]
         if score_line:
             score_text = score_line[0].split(':')[1].strip()
             points_earned = int(score_text.split('/')[0])
         else:
-            points_earned = max_points // 2  # Score par défaut
+            points_earned = max_points // 2  # Default score
         
         return ai_feedback, min(points_earned, max_points), provider_warning
     
     except Exception as e:
-        logger.error('Évaluation d\'essai par IA échouée (%s): %s', provider, e)
-        return f"Évaluation automatique non disponible. Réponse reçue et enregistrée.", max_points // 2, provider_warning
+        logger.error('AI essay evaluation failed (%s): %s', provider, e)
+        return f"Automatic evaluation unavailable. Response received and recorded.", max_points // 2, provider_warning
 
 def generate_ai_hint(question, user_response):
-    """Générer un indice IA (cloud ou edge)"""
+    """Generate an AI hint (cloud or edge)"""
     provider = get_llm_provider()
     if provider.is_edge:
         logger.warning(
-            '[EDGE LLM] generate_ai_hint utilise un modèle local (%s, %s).',
+            '[EDGE LLM] generate_ai_hint uses a local model (%s, %s).',
             provider.name, provider.model_name
         )
 
     try:
         prompt = f"""
-        Un étudiant travaille sur cette question: {question}
+        A student is working on this question: {question}
         
-        Sa réponse actuelle: {user_response}
+        Their current answer: {user_response}
         
-        Donnez un indice utile en français pour l'aider à améliorer sa réponse, sans donner directement la réponse complète.
-        Soyez encourageant et pédagogique.
+        Give a useful hint in English to help them improve their answer, without directly giving the complete answer.
+        Be encouraging and pedagogical.
         """
         
         return provider.generate(
             prompt,
-            system="Vous êtes un assistant pédagogique encourageant et bienveillant pour la pensée critique.",
+            system="You are an encouraging and supportive pedagogical assistant for critical thinking.",
             temperature=0.5,
             max_tokens=150
         )
     
     except Exception as e:
-        logger.error('Génération d\'indice IA échouée (%s): %s', provider, e)
-        return "Désolé, l'assistant IA n'est pas disponible pour le moment. Continuez à réfléchir et n'hésitez pas à demander de l'aide à votre enseignant."
+        logger.error('AI hint generation failed (%s): %s', provider, e)
+        return "Sorry, the AI assistant is not available right now. Keep thinking and do not hesitate to ask your teacher for help."
 
 def check_and_award_badges(user_id):
-    """Vérifier et attribuer les badges mérités"""
-    # Badge "Premier module terminé"
+    """Check and award the deserved badges"""
+    # Badge "First module completed"
     completed_modules = UserProgress.query.filter_by(
         user_id=user_id
     ).filter(UserProgress.completion_percentage >= 100).count()
@@ -491,12 +492,12 @@ def check_and_award_badges(user_id):
     elif completed_modules == 10:
         award_badge(user_id, "ten_modules_completed")
     
-    # Badge "Streak d'apprentissage"
-    # Implémenter la logique pour les streaks quotidiens
+    # Badge "Learning streak"
+    # Implement the logic for daily streaks
     
 def award_badge(user_id, badge_type):
-    """Attribuer un badge à un utilisateur"""
-    # Vérifier si l'utilisateur a déjà ce badge
+    """Award a badge to a user"""
+    # Check if the user already has this badge
     user = db.session.get(User, user_id)
     badge = Badge.query.filter_by(
         organization_id=user.organization_id,
@@ -504,7 +505,7 @@ def award_badge(user_id, badge_type):
     ).first()
     
     if not badge:
-        return  # Badge n'existe pas
+        return  # Badge does not exist
     
     existing_badge = UserBadge.query.filter_by(
         user_id=user_id,
@@ -512,31 +513,31 @@ def award_badge(user_id, badge_type):
     ).first()
     
     if existing_badge:
-        return  # Badge déjà attribué
+        return  # Badge already awarded
     
-    # Attribuer le badge
+    # Award the badge
     user_badge = UserBadge(
         user_id=user_id,
         badge_id=badge.id
     )
     db.session.add(user_badge)
     
-    # Ajouter des points bonus
+    # Add bonus points
     if badge.points_value > 0:
         user_points = UserPoints(
             user_id=user_id,
             points=badge.points_value,
             source='badge_earned',
-            description=f'Badge obtenu: {badge.name}'
+            description=f'Badge earned: {badge.name}'
         )
         db.session.add(user_points)
     
-    # Créer une notification
+    # Create a notification
     Notification.create_notification(
         user_id=user_id,
         notification_type='badge_earned',
-        title='Nouveau badge obtenu !',
-        message=f'Félicitations ! Vous avez obtenu le badge "{badge.name}"',
+        title='New badge earned!',
+        message=f'Congratulations! You earned the badge "{badge.name}"',
         data={'badge_id': badge.id}
     )
     

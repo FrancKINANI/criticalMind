@@ -11,7 +11,7 @@ class LearningModule(db.Model):
     description = db.Column(db.Text)
     content = db.Column(db.JSON, nullable=False)
     difficulty_level = db.Column(db.Integer, default=1)
-    estimated_duration = db.Column(db.Integer)  # en minutes
+    estimated_duration = db.Column(db.Integer)  # in minutes
     is_premium = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
     created_by = db.Column(db.String(36), db.ForeignKey('users.id'))
@@ -50,7 +50,7 @@ class Exercise(db.Model):
     title = db.Column(db.String(255), nullable=False)
     question = db.Column(db.Text, nullable=False)
     exercise_type = db.Column(db.String(50), nullable=False)  # 'multiple_choice', 'essay', 'scenario'
-    options = db.Column(db.JSON)  # pour les questions à choix multiples
+    options = db.Column(db.JSON)  # for multiple choice questions
     correct_answer = db.Column(db.JSON)
     explanation = db.Column(db.Text)
     points = db.Column(db.Integer, default=10)
@@ -88,7 +88,7 @@ class UserProgress(db.Model):
     module_id = db.Column(db.String(36), db.ForeignKey('learning_modules.id'), nullable=False)
     completion_percentage = db.Column(db.Numeric(5, 2), default=0)
     score = db.Column(db.Integer, default=0)
-    time_spent = db.Column(db.Integer, default=0)  # en minutes
+    time_spent = db.Column(db.Integer, default=0)  # in minutes
     started_at = db.Column(db.DateTime)
     completed_at = db.Column(db.DateTime)
     last_accessed = db.Column(db.DateTime, default=datetime.utcnow)

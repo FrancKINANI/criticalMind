@@ -109,8 +109,8 @@ def create_app(config_name=None):
         key_func=get_remote_address,
         default_limits=[app.config.get('RATELIMIT_DEFAULT', "1000 per hour, 100 per minute")],
         storage_uri=app.config.get('REDIS_URL', 'memory://'),
-        # Degradation gracieuse si Redis est indisponible (fallback mémoire)
-        # au lieu de 500 sur chaque requête.
+        # Graceful degradation if Redis is unavailable (memory fallback)
+        # instead of a 500 on every request.
         in_memory_fallback_enabled=True,
         swallow_errors=True
     )
@@ -195,8 +195,8 @@ def create_app(config_name=None):
 
     # Create tables in application context
     with app.app_context():
-        # S'assurer que le répertoire de la base SQLite existe (absent sur un
-        # clone frais : git ne tracke pas les dossiers vides)
+        # Make sure the SQLite database directory exists (missing on a
+        # fresh clone: git does not track empty folders)
         db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
         if db_uri.startswith('sqlite:///'):
             db_dir = os.path.dirname(db_uri.removeprefix('sqlite:///'))

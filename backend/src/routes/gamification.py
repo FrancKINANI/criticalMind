@@ -3,7 +3,7 @@ from src.models import db
 from src.models.gamification import Badge, UserBadge, UserPoints, Leaderboard
 from src.utils.auth import token_required, role_required, organization_required
 from src.utils.validators import validate_json, validate_pagination_params, sanitize_input
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 gamification_bp = Blueprint('gamification', __name__)
 
@@ -11,11 +11,11 @@ gamification_bp = Blueprint('gamification', __name__)
 @token_required
 @organization_required
 def get_badges():
-    """Obtenir tous les badges disponibles"""
+    """Get all the available badges"""
     badges = Badge.query.filter(
         db.or_(
             Badge.organization_id == g.current_user.organization_id,
-            Badge.organization_id.is_(None)  # Badges globaux
+            Badge.organization_id.is_(None)  # Global badges
         )
     ).all()
     
@@ -23,7 +23,7 @@ def get_badges():
     for badge in badges:
         badge_data = badge.to_dict()
         
-        # Vérifier si l'utilisateur a ce badge
+        # Check if the user has this badge
         user_badge = UserBadge.query.filter_by(
             user_id=g.current_user.id,
             badge_id=badge.id
@@ -45,7 +45,7 @@ def get_badges():
 @role_required('admin')
 @validate_json('name', 'criteria')
 def create_badge():
-    """Créer un nouveau badge"""
+    """Create a new badge"""
     data = request.get_json()
     
     badge = Badge(
@@ -69,7 +69,7 @@ def create_badge():
 @gamification_bp.route('/my-badges', methods=['GET'])
 @token_required
 def get_my_badges():
-    """Obtenir les badges de l'utilisateur actuel"""
+    """Get the current user's badges"""
     page = request.args.get('page', 1)
     per_page = request.args.get('per_page', 20)
     
@@ -104,7 +104,7 @@ def get_my_badges():
 @gamification_bp.route('/points', methods=['GET'])
 @token_required
 def get_my_points():
-    """Obtenir l'historique des points de l'utilisateur"""
+    """Get the user's points history"""
     page = request.args.get('page', 1)
     per_page = request.args.get('per_page', 20)
     source_filter = request.args.get('source')
@@ -124,7 +124,7 @@ def get_my_points():
     
     points = [point.to_dict() for point in pagination.items]
     
-    # Calculer le total des points
+    # Calculate the total points
     total_points = db.session.query(db.func.sum(UserPoints.points)).filter_by(
         user_id=g.current_user.id
     ).scalar() or 0
@@ -146,11 +146,11 @@ def get_my_points():
 @token_required
 @organization_required
 def get_leaderboard():
-    """Obtenir le classement de l'organisation"""
+    """Get the organization leaderboard"""
     leaderboard_type = request.args.get('type', 'all_time')  # 'weekly', 'monthly', 'all_time'
-    limit = min(int(request.args.get('limit', 10)), 50)  # Max 50 utilisateurs
+    limit = min(int(request.args.get('limit', 10)), 50)  # Max 50 users
     
-    # Chercher ou créer le leaderboard
+    # Search for or create the leaderboard
     leaderboard = Leaderboard.query.filter_by(
         organization_id=g.current_user.organization_id,
         type=leaderboard_type,
@@ -158,7 +158,7 @@ def get_leaderboard():
     ).first()
     
     if not leaderboard:
-        # Créer un nouveau leaderboard
+        # Create a new leaderboard
         start_date = None
         end_date = None
         
@@ -184,10 +184,10 @@ def get_leaderboard():
         db.session.add(leaderboard)
         db.session.commit()
     
-    # Obtenir les classements
+    # Get the rankings
     rankings = leaderboard.get_rankings(limit=limit)
     
-    # Trouver la position de l'utilisateur actuel
+    # Find the current user's position
     user_rank = None
     user_points = 0
     for rank in rankings:
@@ -208,13 +208,13 @@ def get_leaderboard():
 @gamification_bp.route('/achievements', methods=['GET'])
 @token_required
 def get_achievements_progress():
-    """Obtenir la progression vers les achievements"""
+    """Get the progress towards achievements"""
     from src.models.learning import UserProgress, UserResponse
     from src.models.forum import ForumTopic, ForumReply
     
     user_id = g.current_user.id
     
-    # Calculer les statistiques pour les achievements
+    # Calculate the statistics for achievements
     stats = {
         'modules_completed': UserProgress.query.filter_by(
             user_id=user_id
@@ -246,12 +246,12 @@ def get_achievements_progress():
         ).count()
     }
     
-    # Définir les achievements et leur progression
+    # Define the achievements and their progress
     achievements = [
         {
             'id': 'first_steps',
-            'name': 'Premiers pas',
-            'description': 'Terminer votre premier module',
+            'name': 'First steps',
+            'description': 'Complete your first module',
             'target': 1,
             'current': stats['modules_completed'],
             'completed': stats['modules_completed'] >= 1,
@@ -259,8 +259,8 @@ def get_achievements_progress():
         },
         {
             'id': 'dedicated_learner',
-            'name': 'Apprenant dévoué',
-            'description': 'Terminer 5 modules',
+            'name': 'Dedicated learner',
+            'description': 'Complete 5 modules',
             'target': 5,
             'current': stats['modules_completed'],
             'completed': stats['modules_completed'] >= 5,
@@ -268,8 +268,8 @@ def get_achievements_progress():
         },
         {
             'id': 'expert_learner',
-            'name': 'Expert en apprentissage',
-            'description': 'Terminer 20 modules',
+            'name': 'Learning expert',
+            'description': 'Complete 20 modules',
             'target': 20,
             'current': stats['modules_completed'],
             'completed': stats['modules_completed'] >= 20,
@@ -277,17 +277,17 @@ def get_achievements_progress():
         },
         {
             'id': 'accuracy_master',
-            'name': 'Maître de la précision',
-            'description': 'Obtenir 90% de bonnes réponses sur 50 exercices',
-            'target': 45,  # 90% de 50
+            'name': 'Master of accuracy',
+            'description': 'Get 90% correct answers on 50 exercises',
+            'target': 45,  # 90% of 50
             'current': min(stats['correct_answers'], 45),
             'completed': stats['exercises_completed'] >= 50 and stats['correct_answers'] >= 45,
             'category': 'performance'
         },
         {
             'id': 'community_helper',
-            'name': 'Aide communautaire',
-            'description': 'Créer 10 réponses dans le forum',
+            'name': 'Community helper',
+            'description': 'Create 10 replies in the forum',
             'target': 10,
             'current': stats['forum_replies'],
             'completed': stats['forum_replies'] >= 10,
@@ -295,8 +295,8 @@ def get_achievements_progress():
         },
         {
             'id': 'discussion_starter',
-            'name': 'Lanceur de discussions',
-            'description': 'Créer 5 sujets dans le forum',
+            'name': 'Discussion starter',
+            'description': 'Create 5 topics in the forum',
             'target': 5,
             'current': stats['forum_topics'],
             'completed': stats['forum_topics'] >= 5,
@@ -304,8 +304,8 @@ def get_achievements_progress():
         },
         {
             'id': 'point_collector',
-            'name': 'Collectionneur de points',
-            'description': 'Accumuler 1000 points',
+            'name': 'Point collector',
+            'description': 'Accumulate 1000 points',
             'target': 1000,
             'current': min(int(stats['total_points']), 1000),
             'completed': stats['total_points'] >= 1000,
@@ -313,8 +313,8 @@ def get_achievements_progress():
         },
         {
             'id': 'badge_hunter',
-            'name': 'Chasseur de badges',
-            'description': 'Obtenir 10 badges',
+            'name': 'Badge hunter',
+            'description': 'Earn 10 badges',
             'target': 10,
             'current': stats['badges_earned'],
             'completed': stats['badges_earned'] >= 10,
@@ -331,10 +331,10 @@ def get_achievements_progress():
 @gamification_bp.route('/daily-challenge', methods=['GET'])
 @token_required
 def get_daily_challenge():
-    """Obtenir le défi quotidien"""
+    """Get the daily challenge"""
     today = date.today()
     
-    # Générer un défi basé sur la date (pour la cohérence)
+    # Generate a challenge based on the date (for consistency)
     import hashlib
     seed = hashlib.md5(f"{today.isoformat()}{g.current_user.id}".encode()).hexdigest()
     challenge_type = int(seed[:2], 16) % 4
@@ -342,29 +342,29 @@ def get_daily_challenge():
     challenges = [
         {
             'type': 'exercises',
-            'title': 'Maître des exercices',
-            'description': 'Complétez 5 exercices aujourd\'hui',
+            'title': 'Master of exercises',
+            'description': 'Complete 5 exercises today',
             'target': 5,
             'reward_points': 20
         },
         {
             'type': 'accuracy',
-            'title': 'Précision parfaite',
-            'description': 'Obtenez 100% de bonnes réponses sur 3 exercices',
+            'title': 'Perfect accuracy',
+            'description': 'Get 100% correct answers on 3 exercises',
             'target': 3,
             'reward_points': 25
         },
         {
             'type': 'forum',
-            'title': 'Contributeur communautaire',
-            'description': 'Créez 2 réponses utiles dans le forum',
+            'title': 'Community contributor',
+            'description': 'Create 2 useful replies in the forum',
             'target': 2,
             'reward_points': 15
         },
         {
             'type': 'learning_time',
-            'title': 'Session d\'apprentissage',
-            'description': 'Passez 30 minutes sur la plateforme',
+            'title': 'Learning session',
+            'description': 'Spend 30 minutes on the platform',
             'target': 30,
             'reward_points': 10
         }
@@ -372,7 +372,9 @@ def get_daily_challenge():
     
     daily_challenge = challenges[challenge_type]
     
-    # Calculer la progression actuelle
+    # Calculate the current progress
+    from src.models.learning import UserResponse
+    from src.models.forum import ForumReply
     from src.models.analytics import AnalyticsEvent
     today_start = datetime.combine(today, datetime.min.time())
     today_end = datetime.combine(today, datetime.max.time())
@@ -402,13 +404,13 @@ def get_daily_challenge():
         ).count()
     
     elif daily_challenge['type'] == 'learning_time':
-        # Simuler le temps passé basé sur les événements
+        # Simulate the time spent based on events
         events = AnalyticsEvent.query.filter(
             AnalyticsEvent.user_id == g.current_user.id,
             AnalyticsEvent.created_at >= today_start,
             AnalyticsEvent.created_at <= today_end
         ).count()
-        current_progress = min(events * 2, daily_challenge['target'])  # 2 minutes par événement
+        current_progress = min(events * 2, daily_challenge['target'])  # 2 minutes per event
     
     daily_challenge['current'] = current_progress
     daily_challenge['completed'] = current_progress >= daily_challenge['target']
@@ -421,10 +423,10 @@ def get_daily_challenge():
 @gamification_bp.route('/stats/summary', methods=['GET'])
 @token_required
 def get_gamification_summary():
-    """Obtenir un résumé des statistiques de gamification"""
+    """Get a summary of the gamification statistics"""
     user_id = g.current_user.id
     
-    # Points totaux
+    # Total points
     total_points = db.session.query(db.func.sum(UserPoints.points)).filter_by(
         user_id=user_id
     ).scalar() or 0
@@ -435,7 +437,7 @@ def get_gamification_summary():
         UserBadge.earned_at.desc()
     ).limit(3).all()
     
-    # Position dans le classement
+    # Position in the leaderboard
     if g.current_user.organization_id:
         leaderboard = Leaderboard.query.filter_by(
             organization_id=g.current_user.organization_id,
@@ -453,9 +455,9 @@ def get_gamification_summary():
     else:
         user_rank = None
     
-    # Streak (jours consécutifs d'activité)
-    # Simplifié pour la démo
-    streak_days = 1  # À implémenter avec la logique réelle
+    # Streak (consecutive days of activity)
+    # Simplified for the demo
+    streak_days = 1  # To be implemented with the real logic
     
     return jsonify({
         'summary': {

@@ -5,10 +5,10 @@ from src.models.user import User
 from src.models.learning import LearningModule
 
 class TestAdmin:
-    """Tests pour le panneau d'administration"""
+    """Tests for the admin panel"""
     
     def test_admin_dashboard(self, client, auth_headers):
-        """Test du tableau de bord administrateur"""
+        """Test the admin dashboard"""
         response = client.get('/api/admin/dashboard', headers=auth_headers)
         
         assert response.status_code == 200
@@ -17,7 +17,7 @@ class TestAdmin:
         assert 'popular_modules' in data
         assert 'recent_activity' in data
         
-        # Vérifier les statistiques
+        # Check the statistics
         stats = data['stats']
         assert 'total_users' in stats
         assert 'active_users' in stats
@@ -25,7 +25,7 @@ class TestAdmin:
         assert 'avg_progress' in stats
     
     def test_admin_get_all_users(self, client, auth_headers):
-        """Test de récupération de tous les utilisateurs"""
+        """Test retrieving all users"""
         response = client.get('/api/admin/users', headers=auth_headers)
         
         assert response.status_code == 200
@@ -33,18 +33,18 @@ class TestAdmin:
         assert 'users' in data
         assert 'pagination' in data
         
-        # Vérifier qu'au moins l'utilisateur admin existe
+        # Check that at least the admin user exists
         assert len(data['users']) >= 1
         
-        # Vérifier les statistiques utilisateur
+        # Check the user statistics
         user = data['users'][0]
         assert 'stats' in user
         assert 'modules_completed' in user['stats']
         assert 'total_points' in user['stats']
     
     def test_admin_get_all_modules(self, client, auth_headers):
-        """Test de récupération de tous les modules avec statistiques"""
-        # Créer d'abord un module
+        """Test retrieving all modules with statistics"""
+        # First create a module
         client.post('/api/learning/modules', 
                    headers=auth_headers,
                    json={
@@ -60,7 +60,7 @@ class TestAdmin:
         assert 'modules' in data
         assert 'pagination' in data
         
-        # Vérifier les statistiques du module
+        # Check the module statistics
         if len(data['modules']) > 0:
             module = data['modules'][0]
             assert 'stats' in module
@@ -68,8 +68,8 @@ class TestAdmin:
             assert 'completion_rate' in module['stats']
     
     def test_toggle_module_status(self, client, auth_headers):
-        """Test d'activation/désactivation d'un module"""
-        # Créer un module
+        """Test activating/deactivating a module"""
+        # Create a module
         create_response = client.post('/api/learning/modules', 
                                      headers=auth_headers,
                                      json={
@@ -80,7 +80,7 @@ class TestAdmin:
         
         module_id = create_response.get_json()['module']['id']
         
-        # Désactiver le module
+        # Deactivate the module
         response = client.post(f'/api/admin/modules/{module_id}/toggle-status',
                               headers=auth_headers)
         
@@ -90,10 +90,10 @@ class TestAdmin:
         assert 'is_active' in data
     
     def test_impersonate_user(self, client, auth_headers):
-        """Test d'impersonation d'un utilisateur"""
-        # Créer un utilisateur à impersonner
+        """Test impersonating a user"""
+        # Create a user to impersonate
         with client.application.app_context():
-            # Récupérer l'organisation de l'admin
+            # Retrieve the admin's organization
             admin_user = User.query.filter_by(email='test@example.com').first()
             
             target_user = User(
@@ -119,7 +119,7 @@ class TestAdmin:
         assert data['user']['email'] == 'target@example.com'
     
     def test_forum_moderation(self, client, auth_headers):
-        """Test des outils de modération du forum"""
+        """Test the forum moderation tools"""
         response = client.get('/api/admin/forum/moderation', headers=auth_headers)
         
         assert response.status_code == 200
@@ -128,14 +128,14 @@ class TestAdmin:
         assert 'recent_replies' in data
         assert 'forum_stats' in data
         
-        # Vérifier les statistiques du forum
+        # Check the forum statistics
         forum_stats = data['forum_stats']
         assert 'total_topics' in forum_stats
         assert 'total_replies' in forum_stats
         assert 'active_categories' in forum_stats
     
     def test_analytics(self, client, auth_headers):
-        """Test des analyses administrateur"""
+        """Test the admin analytics"""
         response = client.get('/api/admin/analytics?period=7', headers=auth_headers)
         
         assert response.status_code == 200
@@ -148,7 +148,7 @@ class TestAdmin:
         assert 'popular_modules' in data
     
     def test_system_health(self, client, auth_headers):
-        """Test de vérification de l'état du système"""
+        """Test checking the system health"""
         response = client.get('/api/admin/system/health', headers=auth_headers)
         
         assert response.status_code == 200
@@ -157,16 +157,16 @@ class TestAdmin:
         assert 'table_counts' in data
         assert 'subscription_status' in data
         
-        # Vérifier l'état de la base de données
+        # Check the database status
         assert data['system_health']['database'] == 'healthy'
         
-        # Vérifier les compteurs de tables
+        # Check the table counters
         table_counts = data['table_counts']
         assert 'users' in table_counts
         assert 'modules' in table_counts
     
     def test_export_users(self, client, auth_headers):
-        """Test d'export des données utilisateurs"""
+        """Test exporting the users data"""
         response = client.get('/api/admin/export/users', headers=auth_headers)
         
         assert response.status_code == 200
@@ -175,10 +175,10 @@ class TestAdmin:
         assert 'exported_at' in data
         assert 'total_count' in data
         
-        # Vérifier qu'au moins l'utilisateur admin est exporté
+        # Check that at least the admin user is exported
         assert data['total_count'] >= 1
         
-        # Vérifier la structure des données exportées
+        # Check the structure of the exported data
         if len(data['users']) > 0:
             user = data['users'][0]
             assert 'email' in user
@@ -187,7 +187,7 @@ class TestAdmin:
             assert 'total_points' in user
     
     def test_organization_settings(self, client, auth_headers):
-        """Test de récupération des paramètres d'organisation"""
+        """Test retrieving the organization settings"""
         response = client.get('/api/admin/settings', headers=auth_headers)
         
         assert response.status_code == 200
@@ -196,14 +196,14 @@ class TestAdmin:
         assert 'features' in data
         assert 'limits' in data
         
-        # Vérifier les fonctionnalités
+        # Check the features
         features = data['features']
         assert 'forum_enabled' in features
         assert 'gamification_enabled' in features
         assert 'ai_features_enabled' in features
     
     def test_update_organization_settings(self, client, auth_headers):
-        """Test de mise à jour des paramètres d'organisation"""
+        """Test updating the organization settings"""
         response = client.put('/api/admin/settings',
                              headers=auth_headers,
                              json={
@@ -217,7 +217,7 @@ class TestAdmin:
         assert data['organization']['name'] == 'Updated Organization Name'
     
     def test_student_cannot_access_admin(self, client, student_headers):
-        """Test qu'un étudiant ne peut pas accéder aux fonctions admin"""
+        """Test that a student cannot access the admin functions"""
         response = client.get('/api/admin/dashboard', headers=student_headers)
         
         assert response.status_code == 403
@@ -225,14 +225,14 @@ class TestAdmin:
         assert 'Insufficient permissions' in data['error']
     
     def test_admin_search_users(self, client, auth_headers):
-        """Test de recherche d'utilisateurs"""
+        """Test searching users"""
         response = client.get('/api/admin/users?search=test', headers=auth_headers)
         
         assert response.status_code == 200
         data = response.get_json()
         assert 'users' in data
         
-        # Vérifier que la recherche fonctionne
+        # Check that the search works
         if len(data['users']) > 0:
             user = data['users'][0]
             search_term = 'test'
@@ -241,14 +241,14 @@ class TestAdmin:
                    search_term.lower() in user['email'].lower())
     
     def test_admin_filter_users_by_role(self, client, auth_headers):
-        """Test de filtrage des utilisateurs par rôle"""
+        """Test filtering users by role"""
         response = client.get('/api/admin/users?role=admin', headers=auth_headers)
         
         assert response.status_code == 200
         data = response.get_json()
         assert 'users' in data
         
-        # Vérifier que tous les utilisateurs retournés sont des admins
+        # Check that all returned users are admins
         for user in data['users']:
             assert user['role'] == 'admin'
 

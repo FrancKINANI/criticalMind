@@ -10,10 +10,10 @@ users_bp = Blueprint('users', __name__)
 @users_bp.route('/profile', methods=['GET'])
 @token_required
 def get_profile():
-    """Obtenir le profil de l'utilisateur actuel"""
+    """Get the current user's profile"""
     user_data = g.current_user.to_dict()
     
-    # Ajouter les statistiques utilisateur
+    # Add the user statistics
     from src.models.gamification import UserPoints, UserBadge
     from src.models.learning import UserProgress
     
@@ -33,24 +33,24 @@ def get_profile():
 @token_required
 @validate_json('first_name', 'last_name')
 def update_profile():
-    """Mettre à jour le profil de l'utilisateur"""
+    """Update the user's profile"""
     data = request.get_json()
     
     g.current_user.first_name = sanitize_input(data['first_name'], 100)
     g.current_user.last_name = sanitize_input(data['last_name'], 100)
     
-    # Mettre à jour l'email si fourni et différent
+    # Update the email if provided and different
     if 'email' in data and data['email'] != g.current_user.email:
         new_email = sanitize_input(data['email'].lower())
         if not validate_email(new_email):
             return jsonify({'error': 'Invalid email format'}), 400
         
-        # Vérifier que l'email n'est pas déjà utilisé
+        # Check that the email is not already in use
         if User.query.filter_by(email=new_email).first():
             return jsonify({'error': 'Email already in use'}), 409
         
         g.current_user.email = new_email
-        g.current_user.email_verified = False  # Nécessite une nouvelle vérification
+        g.current_user.email_verified = False  # Requires a new verification
     
     db.session.commit()
     
@@ -64,7 +64,7 @@ def update_profile():
 @organization_required
 @permission_required('manage_users')
 def list_users():
-    """Lister les utilisateurs de l'organisation"""
+    """List the users of the organization"""
     page = request.args.get('page', 1)
     per_page = request.args.get('per_page', 20)
     search = request.args.get('search', '')
@@ -72,10 +72,10 @@ def list_users():
     
     page, per_page = validate_pagination_params(page, per_page)
     
-    # Construire la requête
+    # Build the query
     query = User.query.filter_by(organization_id=g.current_user.organization_id)
     
-    # Filtrer par recherche
+    # Filter by search
     if search:
         search_term = f"%{search}%"
         query = query.filter(
@@ -86,11 +86,11 @@ def list_users():
             )
         )
     
-    # Filtrer par rôle
+    # Filter by role
     if role_filter:
         query = query.filter_by(role=role_filter)
     
-    # Paginer les résultats
+    # Paginate the results
     pagination = query.paginate(
         page=page,
         per_page=per_page,
@@ -116,7 +116,7 @@ def list_users():
 @organization_required
 @permission_required('manage_users')
 def get_user(user_id):
-    """Obtenir les détails d'un utilisateur"""
+    """Get the details of a user"""
     user = User.query.filter_by(
         id=user_id,
         organization_id=g.current_user.organization_id
@@ -125,13 +125,13 @@ def get_user(user_id):
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
-    # Ajouter les statistiques détaillées
+    # Add the detailed statistics
     from src.models.gamification import UserPoints, UserBadge
     from src.models.learning import UserProgress
     
     user_data = user.to_dict()
     
-    # Points par source
+    # Points by source
     points_by_source = db.session.query(
         UserPoints.source,
         db.func.sum(UserPoints.points)
@@ -157,7 +157,7 @@ def get_user(user_id):
 @permission_required('manage_users')
 @validate_json('first_name', 'last_name', 'role')
 def update_user(user_id):
-    """Mettre à jour un utilisateur"""
+    """Update a user"""
     data = request.get_json()
     
     user = User.query.filter_by(
@@ -168,18 +168,18 @@ def update_user(user_id):
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
-    # Empêcher la modification de son propre rôle
+    # Prevent modifying one's own role
     if user.id == g.current_user.id and 'role' in data:
         return jsonify({'error': 'Cannot modify your own role'}), 403
     
-    # Valider le rôle
+    # Validate the role
     if 'role' in data:
         is_valid, message = validate_user_role(data['role'])
         if not is_valid:
             return jsonify({'error': message}), 400
         user.role = data['role']
     
-    # Mettre à jour les autres champs
+    # Update the other fields
     user.first_name = sanitize_input(data['first_name'], 100)
     user.last_name = sanitize_input(data['last_name'], 100)
     
@@ -198,7 +198,7 @@ def update_user(user_id):
 @organization_required
 @permission_required('manage_users')
 def delete_user(user_id):
-    """Supprimer un utilisateur (désactivation)"""
+    """Delete a user (deactivation)"""
     user = User.query.filter_by(
         id=user_id,
         organization_id=g.current_user.organization_id
@@ -207,11 +207,11 @@ def delete_user(user_id):
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
-    # Empêcher la suppression de son propre compte
+    # Prevent deleting one's own account
     if user.id == g.current_user.id:
         return jsonify({'error': 'Cannot delete your own account'}), 403
     
-    # Désactiver l'utilisateur au lieu de le supprimer
+    # Deactivate the user instead of deleting it
     user.is_active = False
     db.session.commit()
     
@@ -223,7 +223,7 @@ def delete_user(user_id):
 @permission_required('manage_users')
 @validate_json('email', 'role')
 def invite_user():
-    """Inviter un nouvel utilisateur à l'organisation"""
+    """Invite a new user to the organization"""
     data = request.get_json()
     
     email = sanitize_input(data['email'].lower())
@@ -235,7 +235,7 @@ def invite_user():
     if not is_valid:
         return jsonify({'error': message}), 400
     
-    # Vérifier si l'utilisateur existe déjà
+    # Check if the user already exists
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
         if existing_user.organization_id == g.current_user.organization_id:
@@ -243,8 +243,8 @@ def invite_user():
         else:
             return jsonify({'error': 'User already exists in another organization'}), 409
     
-    # Dans une vraie application, on enverrait un email d'invitation
-    # Pour la démo, on crée directement l'utilisateur avec un mot de passe temporaire
+    # In a real application, an invitation email would be sent
+    # For the demo, we create the user directly with a temporary password
     
     user = User(
         email=email,
@@ -256,7 +256,7 @@ def invite_user():
         email_verified=False
     )
     
-    # Mot de passe temporaire (dans une vraie app, ce serait généré et envoyé par email)
+    # Temporary password (in a real app, this would be generated and sent by email)
     user.set_password('TempPassword123!')
     
     db.session.add(user)
@@ -265,37 +265,37 @@ def invite_user():
     return jsonify({
         'message': 'User invited successfully',
         'user': user.to_dict(),
-        'temporary_password': 'TempPassword123!'  # À supprimer en production
+        'temporary_password': 'TempPassword123!'  # Remove in production
     }), 201
 
 @users_bp.route('/stats', methods=['GET'])
 @token_required
 @organization_required
 def get_user_stats():
-    """Obtenir les statistiques de l'utilisateur actuel"""
+    """Get the current user's statistics"""
     from src.models.gamification import UserPoints, UserBadge
     from src.models.learning import UserProgress, UserResponse
     from src.models.forum import ForumTopic, ForumReply
     
     user_id = g.current_user.id
     
-    # Points totaux
+    # Total points
     total_points = db.session.query(db.func.sum(UserPoints.points)).filter_by(user_id=user_id).scalar() or 0
     
     # Badges
     badges_count = UserBadge.query.filter_by(user_id=user_id).count()
     recent_badges = UserBadge.query.filter_by(user_id=user_id).order_by(UserBadge.earned_at.desc()).limit(3).all()
     
-    # Progression d'apprentissage
+    # Learning progress
     modules_started = UserProgress.query.filter_by(user_id=user_id).count()
     modules_completed = UserProgress.query.filter_by(user_id=user_id).filter(UserProgress.completion_percentage >= 100).count()
     avg_score = db.session.query(db.func.avg(UserProgress.score)).filter_by(user_id=user_id).scalar() or 0
     
-    # Activité forum
+    # Forum activity
     topics_created = ForumTopic.query.filter_by(user_id=user_id).count()
     replies_posted = ForumReply.query.filter_by(user_id=user_id).count()
     
-    # Exercices
+    # Exercises
     exercises_completed = UserResponse.query.filter_by(user_id=user_id).count()
     correct_answers = UserResponse.query.filter_by(user_id=user_id, is_correct=True).count()
     accuracy = (correct_answers / exercises_completed * 100) if exercises_completed > 0 else 0
