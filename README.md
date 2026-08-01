@@ -53,6 +53,14 @@ CriticalMind/
 └── .env.example           # Environment variables template
 ```
 
+## 📚 Documentation
+
+- [Technical Documentation](./documentation/CriticalMind_SaaS_Technical_Documentation.md) - Full system architecture, data model, security, and API reference
+- [User Guide](./documentation/CriticalMind_SaaS_User_Guide.md) - Platform usage guide for end users
+- [Architecture Overview](./documentation/CriticalMind_SaaS_Architecture.md) - Technical architecture and database schema
+- [SaaS Research Report](./documentation/CriticalMind_SaaS_Research_Report.md) - Best practices for building a scalable and secure SaaS
+- [App Overview](./documentation/CriticalMind_SaaS_App_Overview.md) - Original application concept and feature description
+
 ## 🚀 Quick Start
 
 ### Prerequisites

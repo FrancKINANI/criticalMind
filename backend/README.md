@@ -259,9 +259,11 @@ JWT_SECRET_KEY=<strong-random-key>
 ## 📞 Support
 
 ### Documentation
-- [Complete Technical Documentation](./CriticalMind_SaaS_Documentation_Technique.md)
-- [User Guide](./Guide_Utilisation_CriticalMind_SaaS.md)
-- [Architecture Overview](./architecture_technique_saas.md)
+- [Complete Technical Documentation](../documentation/CriticalMind_SaaS_Technical_Documentation.md)
+- [User Guide](../documentation/CriticalMind_SaaS_User_Guide.md)
+- [Architecture Overview](../documentation/CriticalMind_SaaS_Architecture.md)
+- [SaaS Research Report](../documentation/CriticalMind_SaaS_Research_Report.md)
+- [App Overview](../documentation/CriticalMind_SaaS_App_Overview.md)
 
 ### Contact
 - **Email**: support@criticalmind.ai
