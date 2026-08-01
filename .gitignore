@@ -55,6 +55,13 @@ env.bak/
 venv.bak/
 backend/venv/
 backend/env/
+# Artefacts d'un venv créé par erreur à la racine du backend (reconstruit dans backend/venv/)
+backend/bin/
+backend/lib/
+backend/lib64/
+backend/include/
+backend/share/
+backend/pyvenv.cfg
 
 # Node.js
 node_modules/
