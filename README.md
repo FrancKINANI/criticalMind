@@ -227,11 +227,11 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to CriticalMind.
+
+- [Report a bug](https://github.com/FrancKINANI/criticalMind/issues/new?template=bug_report.md)
+- [Request a feature](https://github.com/FrancKINANI/criticalMind/issues/new?template=feature_request.md)
+- [Submit a pull request](https://github.com/FrancKINANI/criticalMind/pulls)
 
 ## 📄 License
 
